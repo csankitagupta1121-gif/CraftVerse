@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Login | CraftVerse</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+<!-- ================= HEADER ================= -->
+<header>
+    <h1>CraftVerse <span>(Admin Portal)</span></h1>
+    <nav>
+        <a href="index.html">Home</a>
+        <a href="products.html">Products</a>
+        <a href="login.html">Customer Login</a>
+    </nav>
+</header>
+
+<main>
+    <section class="login-section" style="max-width: 480px; margin: 50px auto;">
+        <h2>Admin Login</h2>
+        <p class="login-intro">
+            Enter authorized credentials to access the CraftVerse Control Dashboard.
+        </p>
+
+        <!-- Credentials Helper Tip -->
+        <div style="background: #fff; border-left: 4px solid var(--terracotta); padding: 10px 14px; margin-bottom: 20px; border-radius: 6px; font-size: 13px;">
+            <p style="margin: 0; text-align: left;"><strong>Default Admin:</strong> admin@craftverse.com<br><strong>Password:</strong> admin123</p>
+        </div>
+
+        <form class="login-form" id="adminLoginForm" onsubmit="handleAdminLogin(event)">
+            <div class="form-group">
+                <label for="admin-email">Admin Email</label>
+                <input
+                    type="email"
+                    id="admin-email"
+                    name="email"
+                    placeholder="admin@craftverse.com"
+                    required>
+            </div>
+            <div class="form-group">
+                <label for="admin-password">Password</label>
+                <input
+                    type="password"
+                    id="admin-password"
+                    name="password"
+                    placeholder="Enter password"
+                    required>
+            </div>
+            <button type="submit" class="btn" style="width: 100%; margin-top: 10px;">
+                Login to Dashboard 🔐
+            </button>
+        </form>
+
+        <p class="guest-link" style="margin-top: 25px;">
+            Not an admin?
+            <a href="login.html">Go to Customer Login</a>
+        </p>
+    </section>
+</main>
+
+<footer>
+    <p>© 2026 CraftVerse Admin Portal. All Rights Reserved.</p>
+</footer>
+
+<!-- Toast Notification -->
+<div id="toast-notification" class="toast-notification"></div>
+
+<script src="js/main.js"></script>
+<script>
+    function handleAdminLogin(e) {
+        e.preventDefault();
+        const email = document.getElementById("admin-email").value.trim().toLowerCase();
+        const password = document.getElementById("admin-password").value;
+
+        // Default admin credentials check
+        if (email === "admin@craftverse.com" && password === "admin123") {
+            const adminUser = {
+                name: "Super Admin",
+                email: email,
+                role: "admin"
+            };
+            localStorage.setItem("craftverse_user", JSON.stringify(adminUser));
+            localStorage.setItem("craftverse_admin_logged", "true");
+
+            showToast("Admin Login Successful! Redirecting... 🚀");
+            setTimeout(() => {
+                window.location.href = "admin.html";
+            }, 1000);
+        } else {
+            showToast("❌ Invalid Admin Email or Password!");
+        }
+    }
+</script>
+</body>
+</html>

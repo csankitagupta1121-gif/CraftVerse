@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cart | CraftVerse</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+<!-- ================= HEADER ================= -->
+<header>
+    <h1>CraftVerse</h1>
+    <nav>
+        <a href="index.html">Home</a>
+        <a href="products.html">Products</a>
+        <a href="cart.html" class="active">Cart <span class="cart-count-badge" style="display:none;">0</span></a>
+        <a href="contact.html">Contact</a>
+        <span id="nav-auth-links">
+            <a href="login.html">Login</a>
+        </span>
+        <a href="admin.html">Admin</a>
+    </nav>
+</header>
+
+<main>
+    <section class="cart-section">
+        <h2>My Cart</h2>
+        <p class="section-intro">Review your selected handmade products before checkout.</p>
+
+        <!-- Dynamic Cart Items Area -->
+        <div id="cartContentArea">
+            <div class="cart-container" id="cartItemsList">
+                <!-- Loaded dynamically by JS -->
+            </div>
+
+            <div class="order-summary" id="orderSummaryBox">
+                <h3>Order Summary</h3>
+                <div class="summary-row">
+                    <span>Total Products Count</span>
+                    <span id="summaryTotalItems">0</span>
+                </div>
+                <div class="summary-row">
+                    <span>Delivery Charge</span>
+                    <span style="color: green; font-weight: bold;">FREE</span>
+                </div>
+                <div class="summary-row">
+                    <span>Estimated Delivery</span>
+                    <span>3–5 Business Days</span>
+                </div>
+                <div class="summary-total">
+                    <span>Total Amount</span>
+                    <strong id="summaryTotalAmount">₹0</strong>
+                </div>
+            </div>
+
+            <div class="checkout-area" style="display: flex; gap: 15px; justify-content: center; margin-top: 30px; flex-wrap: wrap;">
+                <a href="checkout.html" class="btn" id="proceedCheckoutBtn">
+                    Proceed to Checkout 💳
+                </a>
+                <a href="products.html" class="btn" style="background: transparent; color: var(--dark-brown); border: 1px solid var(--dark-brown);">
+                    Continue Shopping 🛍️
+                </a>
+            </div>
+        </div>
+
+        <!-- Empty Cart State -->
+        <div id="emptyCartView" style="display: none; text-align: center; padding: 40px 20px;">
+            <div style="font-size: 60px; margin-bottom: 15px;">🛒</div>
+            <h3>Your Cart is Currently Empty</h3>
+            <p style="margin: 15px 0 25px; color: var(--muted);">Looks like you haven't added any unique handcrafted treasures to your cart yet.</p>
+            <a href="products.html" class="btn">Explore Products Now</a>
+        </div>
+    </section>
+</main>
+
+<footer>
+    <p>© 2026 CraftVerse. All Rights Reserved.</p>
+</footer>
+
+<!-- Toast Notification -->
+<div id="toast-notification" class="toast-notification"></div>
+
+<script src="js/main.js"></script>
+<script>
+    // Render Cart from LocalStorage
+    function renderCart() {
+        const cart = getCart();
+        const cartList = document.getElementById("cartItemsList");
+        const cartContentArea = document.getElementById("cartContentArea");
+        const emptyCartView = document.getElementById("emptyCartView");
+
+        if (!cartList || !cartContentArea || !emptyCartView) return;
+
+        if (cart.length === 0) {
+            cartContentArea.style.display = "none";
+            emptyCartView.style.display = "block";
+            return;
+        }
+
+        cartContentArea.style.display = "block";
+        emptyCartView.style.display = "none";
+
+        let totalItems = 0;
+        let totalAmount = 0;
+
+        cartList.innerHTML = cart.map((item, index) => {
+            const itemQty = item.quantity || 1;
+            const itemTotal = item.price * itemQty;
+            totalItems += itemQty;
+            totalAmount += itemTotal;
+
+            return `
+                <div class="cart-item" style="display: flex; align-items: center; justify-content: space-between; gap: 20px; padding: 15px; border-bottom: 1px solid var(--border); flex-wrap: wrap;">
+                    <div style="display: flex; align-items: center; gap: 15px;">
+                        <img src="${item.image}" class="cart-img" alt="${item.name}" style="width: 70px; height: 70px; object-fit: cover; border-radius: 8px;">
+                        <div class="cart-details">
+                            <h3 style="margin-bottom: 5px; font-size: 18px;">${item.name}</h3>
+                            <p><strong>Price:</strong> ₹${item.price}</p>
+                        </div>
+                    </div>
+
+                    <div style="display: flex; align-items: center; gap: 15px;">
+                        <div style="display: flex; align-items: center; border: 1px solid var(--border); border-radius: 20px; overflow: hidden; background: #fff;">
+                            <button type="button" onclick="changeQuantity(${index}, -1)" style="border: none; background: transparent; padding: 6px 12px; cursor: pointer; font-size: 16px; font-weight: bold;">−</button>
+                            <span style="padding: 0 10px; font-weight: bold; min-width: 25px; text-align: center;">${itemQty}</span>
+                            <button type="button" onclick="changeQuantity(${index}, 1)" style="border: none; background: transparent; padding: 6px 12px; cursor: pointer; font-size: 16px; font-weight: bold;">+</button>
+                        </div>
+                        <p style="font-weight: bold; min-width: 70px; text-align: right; color: var(--dark-brown);">₹${itemTotal}</p>
+                        <button type="button" onclick="removeItemFromCart(${index})" title="Remove item" style="background: none; border: none; font-size: 18px; cursor: pointer; color: #a33; padding: 5px;">🗑️</button>
+                    </div>
+                </div>
+            `;
+        }).join("");
+
+        document.getElementById("summaryTotalItems").textContent = totalItems;
+        document.getElementById("summaryTotalAmount").textContent = `₹${totalAmount}`;
+    }
+
+    function changeQuantity(index, delta) {
+        let cart = getCart();
+        if (!cart[index]) return;
+
+        cart[index].quantity = (cart[index].quantity || 1) + delta;
+
+        if (cart[index].quantity <= 0) {
+            cart.splice(index, 1);
+            showToast("Item removed from cart! 🗑️");
+        }
+
+        saveCart(cart);
+        renderCart();
+    }
+
+    function removeItemFromCart(index) {
+        let cart = getCart();
+        if (!cart[index]) return;
+
+        const removedName = cart[index].name;
+        cart.splice(index, 1);
+        saveCart(cart);
+        renderCart();
+        showToast(`"${removedName}" removed from cart! 🗑️`);
+    }
+
+    document.addEventListener("DOMContentLoaded", () => {
+        renderCart();
+    });
+</script>
+</body>
+</html>

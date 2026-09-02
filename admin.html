@@ -1,0 +1,280 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard - CraftVerse</title>
+    <link rel="stylesheet" href="css/style.css">
+    <style>
+        .admin-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 15px;
+            background: #fff;
+            border-radius: 10px;
+            overflow: hidden;
+        }
+        .admin-table th, .admin-table td {
+            padding: 12px 15px;
+            text-align: left;
+            border-bottom: 1px solid var(--border);
+            font-size: 14px;
+        }
+        .admin-table th {
+            background: var(--dark-brown);
+            color: #fff;
+        }
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0, 0, 0, 0.6);
+            z-index: 2000;
+            justify-content: center;
+            align-items: center;
+        }
+        .modal-box {
+            background: var(--section-bg);
+            padding: 30px;
+            border-radius: 15px;
+            max-width: 500px;
+            width: 90%;
+            border: 1px solid var(--border);
+        }
+    </style>
+</head>
+<body>
+<!-- ================= HEADER ================= -->
+<header>
+    <h1>CraftVerse <span>(Admin Panel)</span></h1>
+    <nav>
+        <a href="index.html">🏪 View Store</a>
+        <a href="products.html">Products</a>
+        <a href="admin.html" class="active">Dashboard</a>
+        <a href="#" onclick="logoutUser(event)">Logout</a>
+    </nav>
+</header>
+
+<section class="admin-section">
+    <h2>Admin Dashboard</h2>
+    <p class="admin-welcome">Welcome to CraftVerse Control Room</p>
+
+    <!-- ADMIN STATISTICS -->
+    <div class="admin-stats">
+        <div class="admin-card">
+            <div class="admin-icon">📦</div>
+            <h3>Total Products</h3>
+            <p class="admin-number" id="statTotalProducts">8</p>
+        </div>
+        <div class="admin-card">
+            <div class="admin-icon">🛒</div>
+            <h3>Total Orders</h3>
+            <p class="admin-number" id="statTotalOrders">2</p>
+        </div>
+        <div class="admin-card">
+            <div class="admin-icon">👥</div>
+            <h3>Total Customers</h3>
+            <p class="admin-number" id="statTotalCustomers">5</p>
+        </div>
+    </div>
+
+    <!-- PRODUCT MANAGEMENT -->
+    <div class="admin-actions" style="margin-top: 40px;">
+        <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 15px; margin-bottom: 20px;">
+            <h2 style="margin: 0; text-align: left;">📦 Product Inventory</h2>
+            <button type="button" class="btn" onclick="openAddProductModal()">➕ Add New Product</button>
+        </div>
+
+        <div style="overflow-x: auto;">
+            <table class="admin-table">
+                <thead>
+                    <tr>
+                        <th>Image</th>
+                        <th>Product Name</th>
+                        <th>Category</th>
+                        <th>Price</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody id="adminProductsTable">
+                    <!-- Loaded via JS -->
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- RECENT ORDERS MANAGEMENT -->
+    <div class="admin-actions" style="margin-top: 45px;">
+        <h2 style="text-align: left; margin-bottom: 20px;">🛒 Recent Customer Orders</h2>
+        <div style="overflow-x: auto;">
+            <table class="admin-table">
+                <thead>
+                    <tr>
+                        <th>Order ID</th>
+                        <th>Customer</th>
+                        <th>Phone</th>
+                        <th>Total</th>
+                        <th>Status</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody id="adminOrdersTable">
+                    <!-- Loaded via JS -->
+                </tbody>
+            </table>
+        </div>
+    </div>
+</section>
+
+<!-- ADD PRODUCT MODAL -->
+<div id="addProductModal" class="modal-overlay">
+    <div class="modal-box">
+        <h3 style="margin-bottom: 15px; color: var(--dark-brown);">Add New Handmade Craft</h3>
+        <form id="addProductForm" onsubmit="saveNewProduct(event)">
+            <div class="form-group" style="margin-bottom: 12px;">
+                <label>Product Name</label>
+                <input type="text" id="newProdName" placeholder="e.g. Handcrafted Ceramic Mug" required style="width: 100%; padding: 8px; border-radius: 6px; border: 1px solid var(--border);">
+            </div>
+            <div class="form-group" style="margin-bottom: 12px;">
+                <label>Category</label>
+                <select id="newProdCategory" style="width: 100%; padding: 8px; border-radius: 6px; border: 1px solid var(--border);">
+                    <option value="Accessories">Accessories</option>
+                    <option value="Decor">Home Decor</option>
+                    <option value="Living">Living & Dining</option>
+                </select>
+            </div>
+            <div class="form-group" style="margin-bottom: 12px;">
+                <label>Price (₹)</label>
+                <input type="number" id="newProdPrice" placeholder="e.g. 450" required style="width: 100%; padding: 8px; border-radius: 6px; border: 1px solid var(--border);">
+            </div>
+            <div class="form-group" style="margin-bottom: 12px;">
+                <label>Image URL / Sample Path</label>
+                <input type="text" id="newProdImg" placeholder="e.g. images/vase.jpg" value="images/vase.jpg" required style="width: 100%; padding: 8px; border-radius: 6px; border: 1px solid var(--border);">
+            </div>
+            <div style="display: flex; justify-content: flex-end; gap: 10px; margin-top: 20px;">
+                <button type="button" class="btn" style="background: #999;" onclick="closeAddProductModal()">Cancel</button>
+                <button type="submit" class="btn">Save Product</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<footer>
+    <p>© 2026 CraftVerse Admin Dashboard. All Rights Reserved.</p>
+</footer>
+
+<!-- Toast Notification -->
+<div id="toast-notification" class="toast-notification"></div>
+
+<script src="js/main.js"></script>
+<script>
+    // Initial Products State
+    let adminProducts = JSON.parse(localStorage.getItem("craftverse_custom_products")) || [
+        { id: '1', name: "Handmade Bracelet", category: "Accessories", price: 250, image: "images/bracelet.jpg" },
+        { id: '2', name: "Clay Pot", category: "Decor", price: 400, image: "images/claypot.jpg" },
+        { id: '3', name: "Wooden Photo Frame", category: "Decor", price: 550, image: "images/frame.jpg" },
+        { id: '4', name: "Decorative Flower Vase", category: "Decor", price: 350, image: "images/vase.jpg" },
+        { id: '5', name: "Macrame Wall Hanging", category: "Decor", price: 650, image: "images/macrame.jpg" },
+        { id: '6', name: "Handmade Bag", category: "Accessories", price: 750, image: "images/bag.jpg" },
+        { id: '7', name: "Scented Candle", category: "Living", price: 450, image: "images/candle.jpg" },
+        { id: '8', name: "Wooden Bowl", category: "Living", price: 300, image: "images/bowl.jpg" }
+    ];
+
+    // Initial Orders
+    let adminOrders = JSON.parse(localStorage.getItem("craftverse_all_orders")) || [
+        { id: 'CV-1001', customer: "Ankita Gupta", phone: "9876543210", total: 250, status: "Delivered" },
+        { id: 'CV-1002', customer: "Tara Gupta", phone: "9823456789", total: 650, status: "Shipped" }
+    ];
+
+    function renderAdminDashboard() {
+        // Render Stats
+        document.getElementById("statTotalProducts").textContent = adminProducts.length;
+        document.getElementById("statTotalOrders").textContent = adminOrders.length;
+
+        // Render Products Table
+        const prodTable = document.getElementById("adminProductsTable");
+        prodTable.innerHTML = adminProducts.map((p, idx) => `
+            <tr>
+                <td><img src="${p.image}" alt="${p.name}" style="width: 45px; height: 45px; object-fit: cover; border-radius: 6px;"></td>
+                <td><strong>${p.name}</strong></td>
+                <td>${p.category || 'Craft'}</td>
+                <td>₹${p.price}</td>
+                <td>
+                    <button type="button" onclick="deleteAdminProduct(${idx})" style="background: none; border: none; cursor: pointer; color: #d33; font-size: 16px;">🗑️ Delete</button>
+                </td>
+            </tr>
+        `).join("");
+
+        // Render Orders Table
+        const orderTable = document.getElementById("adminOrdersTable");
+        orderTable.innerHTML = adminOrders.map((o, idx) => `
+            <tr>
+                <td><strong>#${o.id}</strong></td>
+                <td>${o.customer}</td>
+                <td>${o.phone}</td>
+                <td>₹${o.total}</td>
+                <td><span style="background: #e2f0d9; color: #385723; padding: 4px 10px; border-radius: 12px; font-weight: bold; font-size: 12px;">${o.status}</span></td>
+                <td>
+                    <select onchange="updateOrderStatus(${idx}, this.value)" style="padding: 4px; border-radius: 5px; border: 1px solid var(--border);">
+                        <option value="Pending" ${o.status === 'Pending' ? 'selected' : ''}>Pending</option>
+                        <option value="Shipped" ${o.status === 'Shipped' ? 'selected' : ''}>Shipped</option>
+                        <option value="Delivered" ${o.status === 'Delivered' ? 'selected' : ''}>Delivered</option>
+                    </select>
+                </td>
+            </tr>
+        `).join("");
+    }
+
+    function openAddProductModal() {
+        document.getElementById("addProductModal").style.display = "flex";
+    }
+
+    function closeAddProductModal() {
+        document.getElementById("addProductModal").style.display = "none";
+    }
+
+    function saveNewProduct(e) {
+        e.preventDefault();
+        const name = document.getElementById("newProdName").value;
+        const category = document.getElementById("newProdCategory").value;
+        const price = Number(document.getElementById("newProdPrice").value);
+        const image = document.getElementById("newProdImg").value || "images/vase.jpg";
+
+        const newProd = {
+            id: Date.now().toString(),
+            name,
+            category,
+            price,
+            image
+        };
+
+        adminProducts.push(newProd);
+        localStorage.setItem("craftverse_custom_products", JSON.stringify(adminProducts));
+        renderAdminDashboard();
+        closeAddProductModal();
+        showToast("New Product Added Successfully! 🎉");
+        document.getElementById("addProductForm").reset();
+    }
+
+    function deleteAdminProduct(index) {
+        if (confirm("Are you sure you want to delete this product?")) {
+            adminProducts.splice(index, 1);
+            localStorage.setItem("craftverse_custom_products", JSON.stringify(adminProducts));
+            renderAdminDashboard();
+            showToast("Product deleted successfully! 🗑️");
+        }
+    }
+
+    function updateOrderStatus(index, newStatus) {
+        adminOrders[index].status = newStatus;
+        localStorage.setItem("craftverse_all_orders", JSON.stringify(adminOrders));
+        renderAdminDashboard();
+        showToast(`Order #${adminOrders[index].id} updated to ${newStatus}! 🚚`);
+    }
+
+    document.addEventListener("DOMContentLoaded", () => {
+        renderAdminDashboard();
+    });
+</script>
+</body>
+</html>

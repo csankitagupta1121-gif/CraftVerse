@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Orders | CraftVerse</title>
+    <link rel="stylesheet" href="css/style.css">
+    <style>
+        .order-card {
+            background: #fff;
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 12px var(--shadow);
+        }
+        .order-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid var(--border);
+            padding-bottom: 12px;
+            margin-bottom: 15px;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+        .order-status {
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-size: 13px;
+            font-weight: bold;
+        }
+        .status-Placed { background: #fff2cc; color: #b25900; }
+        .status-Shipped { background: #cfe2f3; color: #0b5394; }
+        .status-Delivered { background: #d9ead3; color: #274e13; }
+        .order-item-row {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            margin-bottom: 10px;
+            padding: 8px 0;
+            border-bottom: 1px dashed #eee;
+        }
+    </style>
+</head>
+<body>
+<!-- ================= HEADER ================= -->
+<header>
+    <h1>CraftVerse</h1>
+    <nav>
+        <a href="index.html">Home</a>
+        <a href="products.html">Products</a>
+        <a href="cart.html">Cart <span class="cart-count-badge" style="display:none;">0</span></a>
+        <a href="contact.html">Contact</a>
+        <span id="nav-auth-links">
+            <a href="login.html">Login</a>
+        </span>
+        <a href="admin.html">Admin</a>
+    </nav>
+</header>
+
+<main>
+    <section class="orders-section">
+        <h2>My Orders</h2>
+        <p class="section-intro">
+            View your active and previous CraftVerse orders along with their real-time delivery status.
+        </p>
+
+        <!-- Orders Container (Dynamic) -->
+        <div class="orders-container" id="ordersListContainer">
+            <!-- JavaScript will render orders here -->
+        </div>
+
+        <!-- Empty Orders State -->
+        <div id="emptyOrdersView" style="display: none; text-align: center; padding: 40px 20px;">
+            <div style="font-size: 60px; margin-bottom: 15px;">📦</div>
+            <h3>No Orders Placed Yet</h3>
+            <p style="margin: 15px 0 25px; color: var(--muted);">You haven't placed any orders yet. Discover unique handmade items today!</p>
+            <a href="products.html" class="btn">Start Shopping Now</a>
+        </div>
+    </section>
+</main>
+
+<footer>
+    <p>© 2026 CraftVerse. All Rights Reserved.</p>
+</footer>
+
+<!-- Toast Notification -->
+<div id="toast-notification" class="toast-notification"></div>
+
+<script src="js/main.js"></script>
+<script>
+    function renderOrders() {
+        const container = document.getElementById("ordersListContainer");
+        const emptyView = document.getElementById("emptyOrdersView");
+
+        let orders = JSON.parse(localStorage.getItem("craftverse_user_orders"));
+
+        // Fallback default sample orders if none exist
+        if (!orders || orders.length === 0) {
+            orders = [
+                {
+                    id: "CV-1001",
+                    customer: "Guest User",
+                    phone: "9876543210",
+                    address: "Flat 201, Rosewood Heights, Mumbai, Maharashtra - 400001",
+                    total: 250,
+                    orderDate: "05 August 2026",
+                    status: "Delivered",
+                    paymentMethod: "Cash on Delivery",
+                    items: [
+                        { name: "Handmade Bracelet", price: 250, quantity: 1, image: "images/bracelet.jpg" }
+                    ]
+                },
+                {
+                    id: "CV-1002",
+                    customer: "Guest User",
+                    phone: "9876543210",
+                    address: "Flat 201, Rosewood Heights, Mumbai, Maharashtra - 400001",
+                    total: 400,
+                    orderDate: "08 August 2026",
+                    status: "Shipped",
+                    paymentMethod: "Online UPI",
+                    items: [
+                        { name: "Clay Pot", price: 400, quantity: 1, image: "images/claypot.jpg" }
+                    ]
+                }
+            ];
+        }
+
+        if (orders.length === 0) {
+            container.style.display = "none";
+            emptyView.style.display = "block";
+            return;
+        }
+
+        container.style.display = "block";
+        emptyView.style.display = "none";
+
+        container.innerHTML = orders.map(order => {
+            const statusClass = `status-${order.status || 'Placed'}`;
+            const itemsHtml = (order.items && order.items.length > 0)
+                ? order.items.map(item => `
+                    <div class="order-item-row">
+                        <img src="${item.image || 'images/bracelet.jpg'}" alt="${item.name}" style="width: 50px; height: 50px; object-fit: cover; border-radius: 6px;">
+                        <div style="flex: 1;">
+                            <h4 style="margin: 0; font-size: 15px; color: var(--dark-brown);">${item.name}</h4>
+                            <p style="margin: 0; font-size: 13px; color: var(--muted);">Qty: ${item.quantity || 1} × ₹${item.price}</p>
+                        </div>
+                        <strong style="color: var(--dark-brown);">₹${(item.price * (item.quantity || 1))}</strong>
+                    </div>
+                `).join("")
+                : `<p>Handmade Product Order</p>`;
+
+            return `
+                <div class="order-card">
+                    <div class="order-header">
+                        <div>
+                            <h3 style="margin: 0; color: var(--dark-brown); font-size: 18px;">Order #${order.id}</h3>
+                            <span style="font-size: 13px; color: var(--muted);">Placed on: ${order.orderDate || 'Recently'}</span>
+                        </div>
+                        <span class="order-status ${statusClass}">${order.status || 'Placed'}</span>
+                    </div>
+
+                    <div class="order-items-box" style="margin: 15px 0;">
+                        ${itemsHtml}
+                    </div>
+
+                    <div style="display: flex; justify-content: space-between; align-items: center; border-top: 1px solid var(--border); padding-top: 12px; flex-wrap: wrap; gap: 10px;">
+                        <div style="font-size: 13px; color: var(--muted);">
+                            <strong>Delivery To:</strong> ${order.address || 'Address on file'}<br>
+                            <strong>Payment:</strong> ${order.paymentMethod || 'Cash on Delivery'}
+                        </div>
+                        <div style="text-align: right;">
+                            <span style="font-size: 13px; color: var(--muted);">Total Amount:</span><br>
+                            <strong style="font-size: 20px; color: var(--dark-brown);">₹${order.total}</strong>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }).join("");
+    }
+
+    document.addEventListener("DOMContentLoaded", () => {
+        renderOrders();
+    });
+</script>
+</body>
+</html>

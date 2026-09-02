@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Customer Login - CraftVerse</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+<!-- ================= HEADER ================= -->
+<header>
+    <h1>CraftVerse</h1>
+    <nav>
+        <a href="index.html">Home</a>
+        <a href="products.html">Products</a>
+        <a href="cart.html">Cart <span class="cart-count-badge" style="display:none;">0</span></a>
+        <a href="contact.html">Contact</a>
+        <span id="nav-auth-links">
+            <a href="login.html" class="active">Login</a>
+        </span>
+        <a href="admin.html">Admin</a>
+    </nav>
+</header>
+
+<main>
+    <section class="login-section" style="max-width: 480px; margin: 40px auto;">
+        <h2>Customer Login</h2>
+        <p class="login-intro">
+            Login to your CraftVerse account to track orders and shop handcrafted products.
+        </p>
+
+        <!-- Quick Demo Credentials helper -->
+        <div style="background: #fff; border-left: 4px solid var(--terracotta); padding: 10px 14px; margin-bottom: 20px; border-radius: 6px; font-size: 13px;">
+            <p style="margin: 0; text-align: left;">
+                <strong>Demo Account:</strong> user@craftverse.com<br>
+                <strong>Password:</strong> user123
+            </p>
+        </div>
+
+        <form class="login-form" id="loginForm" onsubmit="handleCustomerLogin(event)">
+            <div class="form-group">
+                <label for="login-email">Email Address</label>
+                <input
+                    type="email"
+                    id="login-email"
+                    name="email"
+                    placeholder="Enter your registered email"
+                    required>
+            </div>
+            <div class="form-group">
+                <label for="login-password">Password</label>
+                <input
+                    type="password"
+                    id="login-password"
+                    name="password"
+                    placeholder="Enter your password"
+                    required>
+            </div>
+            <div class="forgot-password" style="text-align: right; margin-bottom: 15px;">
+                <a href="#" onclick="showToast('Password reset link sent to your email! 📧'); return false;">
+                    Forgot Password?
+                </a>
+            </div>
+            <button type="submit" class="btn" style="width: 100%;">
+                Login Now 🚀
+            </button>
+        </form>
+
+        <p class="register-link" style="margin-top: 25px;">
+            Don't have an account yet?
+            <a href="register.html"><strong>Register Here</strong></a>
+        </p>
+        <p class="guest-link">
+            Want to explore first?
+            <a href="index.html">Continue as Guest</a>
+        </p>
+    </section>
+</main>
+
+<footer>
+    <p>© 2026 CraftVerse. All Rights Reserved.</p>
+</footer>
+
+<!-- Toast Notification -->
+<div id="toast-notification" class="toast-notification"></div>
+
+<script src="js/main.js"></script>
+<script>
+    function handleCustomerLogin(e) {
+        e.preventDefault();
+        const email = document.getElementById("login-email").value.trim().toLowerCase();
+        const password = document.getElementById("login-password").value;
+
+        // Check registered users pool
+        const registeredUsers = JSON.parse(localStorage.getItem("craftverse_registered_users")) || [];
+        
+        // Demo account fallback
+        let matchedUser = registeredUsers.find(u => u.email.toLowerCase() === email && u.password === password);
+
+        if (!matchedUser && email === "user@craftverse.com" && password === "user123") {
+            matchedUser = {
+                name: "Priya Sharma",
+                email: "user@craftverse.com",
+                phone: "9876543210",
+                address: "Flat 402, Green Valley Apartments, Mumbai"
+            };
+        }
+
+        if (matchedUser) {
+            localStorage.setItem("craftverse_user", JSON.stringify({
+                name: matchedUser.name,
+                email: matchedUser.email,
+                phone: matchedUser.phone || "",
+                address: matchedUser.address || ""
+            }));
+
+            showToast(`Welcome back, ${matchedUser.name}! 🎉`);
+
+            setTimeout(() => {
+                // If cart has items, take to checkout, else go to home
+                const cart = getCart();
+                if (cart.length > 0) {
+                    window.location.href = "checkout.html";
+                } else {
+                    window.location.href = "index.html";
+                }
+            }, 1000);
+        } else {
+            showToast("❌ Invalid Email or Password! Try again.");
+        }
+    }
+</script>
+</body>
+</html>

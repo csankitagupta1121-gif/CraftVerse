@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CraftVerse | Handmade Marketplace</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+<!-- ================= HEADER ================= -->
+<header>
+    <h1>CraftVerse</h1>
+    <nav>
+        <a href="index.html">Home</a>
+        <a href="products.html">Products</a>
+        <a href="cart.html">Cart <span class="cart-count-badge" style="display:none;">0</span></a>
+        <a href="contact.html">Contact</a>
+        <span id="nav-auth-links">
+            <a href="login.html">Login</a>
+        </span>
+        <a href="admin.html">Admin</a>
+    </nav>
+</header>
+
+<!-- ================= HERO SECTION (SEAMLESS FULL-WIDTH) ================= -->
+<section class="hero-section">
+    <img src="images/banner.png"
+         alt="CraftVerse Handmade Products"
+         class="hero-banner">
+    <div class="welcome-content">
+        <h2>Welcome to CraftVerse</h2>
+        <p>
+            Discover beautiful handmade products created with love by talented artisans.
+            Shop unique crafts, home decor, gifts and accessories all in one place.
+        </p>
+        <a href="products.html" class="btn">Explore Products</a>
+    </div>
+</section>
+
+<!-- ================= FEATURED PRODUCTS (4 BALANCED PRODUCTS IN 1 ROW) ================= -->
+<section>
+    <h2>Featured Products</h2>
+    <div class="featured-grid">
+        <!-- PRODUCT 1 -->
+        <div class="product">
+            <img src="images/bracelet.jpg"
+                 class="product-img"
+                 alt="Handmade Bracelet">
+            <div class="product-content">
+                <h3>Handmade Bracelet</h3>
+                <p class="product-description">
+                    Beautiful handcrafted bracelet perfect for daily wear and gifting.
+                </p>
+                <p class="product-price">
+                    <strong>₹250</strong>
+                </p>
+                <button type="button" class="btn" onclick="addToCart({id: '1', name: 'Handmade Bracelet', price: 250, image: 'images/bracelet.jpg'})">
+                    Add to Cart
+                </button>
+            </div>
+        </div>
+
+        <!-- PRODUCT 2 -->
+        <div class="product">
+            <img src="images/claypot.jpg"
+                 class="product-img"
+                 alt="Clay Pot">
+            <div class="product-content">
+                <h3>Clay Pot</h3>
+                <p class="product-description">
+                    Classic handmade clay pot ideal for home decoration.
+                </p>
+                <p class="product-price">
+                    <strong>₹400</strong>
+                </p>
+                <button type="button" class="btn" onclick="addToCart({id: '2', name: 'Clay Pot', price: 400, image: 'images/claypot.jpg'})">
+                    Add to Cart
+                </button>
+            </div>
+        </div>
+
+        <!-- PRODUCT 3 -->
+        <div class="product">
+            <img src="images/frame.jpg"
+                 class="product-img"
+                 alt="Wooden Photo Frame">
+            <div class="product-content">
+                <h3>Wooden Photo Frame</h3>
+                <p class="product-description">
+                    Premium wooden frame crafted to preserve your memories beautifully.
+                </p>
+                <p class="product-price">
+                    <strong>₹550</strong>
+                </p>
+                <button type="button" class="btn" onclick="addToCart({id: '3', name: 'Wooden Photo Frame', price: 550, image: 'images/frame.jpg'})">
+                    Add to Cart
+                </button>
+            </div>
+        </div>
+
+        <!-- PRODUCT 4 (NEW) -->
+        <div class="product">
+            <img src="images/vase.jpg"
+                 class="product-img"
+                 alt="Decorative Flower Vase">
+            <div class="product-content">
+                <h3>Decorative Flower Vase</h3>
+                <p class="product-description">
+                    Elegant handmade ceramic vase adding an aesthetic touch to your space.
+                </p>
+                <p class="product-price">
+                    <strong>₹350</strong>
+                </p>
+                <button type="button" class="btn" onclick="addToCart({id: '4', name: 'Decorative Flower Vase', price: 350, image: 'images/vase.jpg'})">
+                    Add to Cart
+                </button>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- ================= OUR SERVICES (1 LINE - 4 CARDS) ================= -->
+<section>
+    <h2>Our Services</h2>
+    <div class="services-grid">
+        <div class="service">
+            <h3>🛍 Wide Collection</h3>
+            <p>Authentic handmade products created by artisans across India.</p>
+        </div>
+        <div class="service">
+            <h3>🔒 Secure Shopping</h3>
+            <p>100% safe checkout with verified payment and cash on delivery.</p>
+        </div>
+        <div class="service">
+            <h3>🚚 Fast Delivery</h3>
+            <p>Doorstep fast delivery with eco-friendly protective packaging.</p>
+        </div>
+        <div class="service">
+            <h3>🛒 Easy Ordering</h3>
+            <p>Simple and convenient shopping experience on all devices.</p>
+        </div>
+    </div>
+</section>
+
+<!-- ================= WHY CHOOSE US (1 LINE - 3 CARDS) ================= -->
+<section>
+    <h2>Why Choose CraftVerse?</h2>
+    <div class="why-grid">
+        <div class="service">
+            <h3>✨ 100% Handmade</h3>
+            <p>Every single item is made with creativity, passion and artisan care.</p>
+        </div>
+        <div class="service">
+            <h3>💰 Affordable Prices</h3>
+            <p>Direct from artisans with zero middlemen, offering fair prices.</p>
+        </div>
+        <div class="service">
+            <h3>🤝 Trusted Quality</h3>
+            <p>High-grade organic materials and strict quality checks on every order.</p>
+        </div>
+    </div>
+</section>
+
+<!-- ================= CUSTOMER REVIEWS (1 LINE - 3 CARDS) ================= -->
+<section>
+    <h2>Customer Reviews</h2>
+    <div class="reviews-grid">
+        <div class="review">
+            <h3>⭐⭐⭐⭐⭐</h3>
+            <h4>Ankita Gupta</h4>
+            <p>Beautiful handmade products! Quality is top-notch and delivery was fast.</p>
+        </div>
+        <div class="review">
+            <h3>⭐⭐⭐⭐⭐</h3>
+            <h4>Tara Gupta</h4>
+            <p>Very smooth shopping experience. The pottery pieces look aesthetic in my living room.</p>
+        </div>
+        <div class="review">
+            <h3>⭐⭐⭐⭐⭐</h3>
+            <h4>Gayatri Kadam</h4>
+            <p>Loved the wooden crafts! Natural finish and premium feel. Will order again.</p>
+        </div>
+    </div>
+</section>
+
+<!-- ================= FAQ ================= -->
+<section>
+    <h2>Frequently Asked Questions</h2>
+    <div class="faq">
+        <h3>What is CraftVerse?</h3>
+        <p>CraftVerse is an online platform connecting talented local artisans directly with conscious shoppers across India.</p>
+    </div>
+    <div class="faq">
+        <h3>How can I place an order?</h3>
+        <p>Browse products, add your favorites to the cart and proceed to our easy checkout page.</p>
+    </div>
+    <div class="faq">
+        <h3>Are all products truly handmade?</h3>
+        <p>Yes! Every item listed on CraftVerse is authentic, artisan handcrafted.</p>
+    </div>
+</section>
+
+<!-- ================= CONTACT ================= -->
+<section style="text-align: center;">
+    <h2>Get in Touch</h2>
+    <p style="margin-bottom: 15px;">Have questions or need custom handcrafted crafts? We're here to help!</p>
+    <a href="contact.html" class="btn">Contact Us Today</a>
+</section>
+
+<!-- ================= FOOTER ================= -->
+<footer>
+    <p>© 2026 CraftVerse. All Rights Reserved.</p>
+</footer>
+
+<!-- Toast Notification Container -->
+<div id="toast-notification" class="toast-notification"></div>
+
+<!-- Scripts -->
+<script src="js/main.js"></script>
+</body>
+</html>

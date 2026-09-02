@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Profile | CraftVerse</title>
+    <link rel="stylesheet" href="css/style.css">
+    <style>
+        .profile-card {
+            background: #fff;
+            border-radius: 15px;
+            padding: 30px;
+            border: 1px solid var(--border);
+            box-shadow: 0 4px 15px var(--shadow);
+            max-width: 650px;
+            margin: 0 auto;
+        }
+        .profile-avatar-row {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+            border-bottom: 1px solid var(--border);
+            padding-bottom: 20px;
+            margin-bottom: 25px;
+        }
+        .avatar-circle {
+            width: 70px;
+            height: 70px;
+            border-radius: 50%;
+            background: var(--dark-brown);
+            color: #fff;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 28px;
+            font-weight: bold;
+        }
+        .info-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 10px 0;
+            border-bottom: 1px dashed #eee;
+            font-size: 15px;
+        }
+        .info-label {
+            color: var(--muted);
+            font-weight: bold;
+        }
+        .profile-actions-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+            gap: 12px;
+            margin-top: 30px;
+        }
+    </style>
+</head>
+<body>
+<!-- ================= HEADER ================= -->
+<header>
+    <h1>CraftVerse</h1>
+    <nav>
+        <a href="index.html">Home</a>
+        <a href="products.html">Products</a>
+        <a href="cart.html">Cart <span class="cart-count-badge" style="display:none;">0</span></a>
+        <a href="contact.html">Contact</a>
+        <span id="nav-auth-links">
+            <a href="profile.html" class="active">Profile</a>
+        </span>
+        <a href="admin.html">Admin</a>
+    </nav>
+</header>
+
+<main>
+    <section class="profile-section">
+        <h2>My Profile</h2>
+        <p class="section-intro">Manage your CraftVerse account details and view your orders.</p>
+
+        <div class="profile-card">
+            <div class="profile-avatar-row">
+                <div class="avatar-circle" id="profileAvatar">👤</div>
+                <div>
+                    <h3 id="profileNameDisplay" style="margin: 0; color: var(--dark-brown); font-size: 22px;">Customer Name</h3>
+                    <p id="profileEmailDisplay" style="margin: 3px 0 0; color: var(--muted); font-size: 14px;">customer@example.com</p>
+                </div>
+            </div>
+
+            <!-- Profile Info Details -->
+            <div class="info-row">
+                <span class="info-label">Full Name:</span>
+                <span id="infoFullName">Guest User</span>
+            </div>
+            <div class="info-row">
+                <span class="info-label">Email:</span>
+                <span id="infoEmail">guest@example.com</span>
+            </div>
+            <div class="info-row">
+                <span class="info-label">Phone:</span>
+                <span id="infoPhone">+91 9876543210</span>
+            </div>
+            <div class="info-row">
+                <span class="info-label">Delivery Address:</span>
+                <span id="infoAddress">Mumbai, Maharashtra</span>
+            </div>
+
+            <!-- Profile Quick Navigation Actions -->
+            <div class="profile-actions-grid">
+                <a href="orders.html" class="btn" style="text-align: center;">📦 My Orders</a>
+                <a href="cart.html" class="btn" style="text-align: center;">🛒 View Cart</a>
+                <button type="button" class="btn" onclick="openEditProfile()" style="background: var(--terracotta);">✏️ Edit Profile</button>
+                <button type="button" class="btn" onclick="logoutUser(event)" style="background: #a33;">🚪 Logout</button>
+            </div>
+        </div>
+    </section>
+</main>
+
+<footer>
+    <p>© 2026 CraftVerse. All Rights Reserved.</p>
+</footer>
+
+<!-- Toast Notification -->
+<div id="toast-notification" class="toast-notification"></div>
+
+<script src="js/main.js"></script>
+<script>
+    function loadUserProfile() {
+        const user = JSON.parse(localStorage.getItem("craftverse_user")) || {
+            name: "Priya Sharma",
+            email: "priya@craftverse.com",
+            phone: "+91 9876543210",
+            address: "Flat 402, Green Valley Apartments, Mumbai, Maharashtra"
+        };
+
+        document.getElementById("profileNameDisplay").textContent = user.name;
+        document.getElementById("profileEmailDisplay").textContent = user.email;
+        document.getElementById("infoFullName").textContent = user.name;
+        document.getElementById("infoEmail").textContent = user.email;
+        document.getElementById("infoPhone").textContent = user.phone || "Not set";
+        document.getElementById("infoAddress").textContent = user.address || "Not set";
+
+        // Initial avatar initial
+        if (user.name) {
+            document.getElementById("profileAvatar").textContent = user.name.charAt(0).toUpperCase();
+        }
+    }
+
+    function openEditProfile() {
+        const user = JSON.parse(localStorage.getItem("craftverse_user")) || {};
+        const newName = prompt("Enter your Full Name:", user.name || "");
+        if (newName === null) return;
+
+        const newPhone = prompt("Enter your Mobile Number:", user.phone || "");
+        if (newPhone === null) return;
+
+        const newAddress = prompt("Enter your Default Delivery Address:", user.address || "");
+        if (newAddress === null) return;
+
+        user.name = newName.trim() || user.name;
+        user.phone = newPhone.trim() || user.phone;
+        user.address = newAddress.trim() || user.address;
+
+        localStorage.setItem("craftverse_user", JSON.stringify(user));
+        loadUserProfile();
+        updateNavbarAuth();
+        showToast("Profile updated successfully! ✨");
+    }
+
+    document.addEventListener("DOMContentLoaded", () => {
+        loadUserProfile();
+    });
+</script>
+</body>
+</html>
