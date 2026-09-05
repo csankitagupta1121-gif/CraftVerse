@@ -16,7 +16,7 @@ function updateCartCount() {
     const countElements = document.querySelectorAll(".cart-count-badge");
     const cart = getCart();
     const totalItems = cart.reduce((sum, item) => sum + (item.quantity || 1), 0);
-    
+
     countElements.forEach(el => {
         el.textContent = totalItems;
         el.style.display = totalItems > 0 ? "inline-block" : "none";
@@ -65,7 +65,7 @@ function showToast(message) {
 function updateNavbarAuth() {
     const user = JSON.parse(localStorage.getItem("craftverse_user"));
     const navAuthContainer = document.getElementById("nav-auth-links");
-    
+
     if (!navAuthContainer) return;
 
     if (user && user.name) {
@@ -96,4 +96,35 @@ function logoutUser(e) {
 document.addEventListener("DOMContentLoaded", () => {
     updateCartCount();
     updateNavbarAuth();
+});
+// Protect pages that require customer login
+function requireLogin() {
+    const user = JSON.parse(localStorage.getItem("craftverse_user"));
+
+    if (!user || !user.email) {
+        showToast("Please login first! 🔐");
+
+        setTimeout(() => {
+            window.location.href = "login.html";
+        }, 800);
+
+        return false;
+    }
+
+    return true;
+}
+
+// Pages that require login
+document.addEventListener("DOMContentLoaded", () => {
+    const currentPage = window.location.pathname.split("/").pop();
+
+    const protectedPages = [
+        "checkout.html",
+        "orders.html",
+        "profile.html"
+    ];
+
+    if (protectedPages.includes(currentPage)) {
+        requireLogin();
+    }
 });

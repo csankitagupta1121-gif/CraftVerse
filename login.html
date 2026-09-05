@@ -86,39 +86,31 @@
 
 <script src="js/main.js"></script>
 <script>
-    function handleCustomerLogin(e) {
-        e.preventDefault();
-        const email = document.getElementById("login-email").value.trim().toLowerCase();
-        const password = document.getElementById("login-password").value;
+    async function handleCustomerLogin(e) {
+    e.preventDefault();
 
-        // Check registered users pool
-        const registeredUsers = JSON.parse(localStorage.getItem("craftverse_registered_users")) || [];
-        
-        // Demo account fallback
-        let matchedUser = registeredUsers.find(u => u.email.toLowerCase() === email && u.password === password);
+    const email = document.getElementById("login-email").value.trim().toLowerCase();
+    const password = document.getElementById("login-password").value;
 
-        if (!matchedUser && email === "user@craftverse.com" && password === "user123") {
-            matchedUser = {
-                name: "Priya Sharma",
-                email: "user@craftverse.com",
-                phone: "9876543210",
-                address: "Flat 402, Green Valley Apartments, Mumbai"
-            };
-        }
+    try {
+        const response = await fetch("http://localhost:3000/api/login", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify({ email, password })
+        });
 
-        if (matchedUser) {
-            localStorage.setItem("craftverse_user", JSON.stringify({
-                name: matchedUser.name,
-                email: matchedUser.email,
-                phone: matchedUser.phone || "",
-                address: matchedUser.address || ""
-            }));
+        const data = await response.json();
 
-            showToast(`Welcome back, ${matchedUser.name}! 🎉`);
+        if (data.success) {
+            localStorage.setItem("craftverse_user", JSON.stringify(data.user));
+
+            showToast(`Welcome back, ${data.user.name}! 🎉`);
 
             setTimeout(() => {
-                // If cart has items, take to checkout, else go to home
                 const cart = getCart();
+
                 if (cart.length > 0) {
                     window.location.href = "checkout.html";
                 } else {
@@ -128,7 +120,12 @@
         } else {
             showToast("❌ Invalid Email or Password! Try again.");
         }
+
+    } catch (error) {
+        console.error("Login Error:", error);
+        showToast("❌ Unable to connect to server!");
     }
+}
 </script>
 </body>
 </html>

@@ -69,8 +69,72 @@ app.get("/api/products", (req, res) => {
     });
 });
 // Get all orders
+// Get all orders with order items
 app.get("/api/orders", (req, res) => {
-    const sql = "SELECT * FROM orders ORDER BY order_id DESC";
+    const ordersSql = "SELECT * FROM orders ORDER BY order_id DESC";
+
+    db.query(ordersSql, (err, orders) => {
+        if (err) {
+            return res.status(500).json({
+                success: false,
+                message: "Database error"
+            });
+        }
+
+        if (orders.length === 0) {
+            return res.json({
+                success: true,
+                orders: []
+            });
+        }
+
+        const orderIds = orders.map(order => order.order_id);
+
+        const itemsSql = `
+            SELECT * FROM order_items
+            WHERE order_id IN (?)
+            ORDER BY order_id DESC
+        `;
+
+        db.query(itemsSql, [orderIds], (err, items) => {
+            if (err) {
+                return res.status(500).json({
+                    success: false,
+                    message: "Order items database error"
+                });
+            }
+
+            const finalOrders = orders.map(order => ({
+                id: order.order_id,
+                customer: order.customer,
+                email: order.email,
+                phone: order.phone,
+                address: order.address,
+                total: order.totalAmount,
+                paymentMethod: order.paymentMethod,
+                status: order.status,
+                orderDate: order.orderDate,
+                items: items
+                    .filter(item => item.order_id === order.order_id)
+                    .map(item => ({
+                        product_id: item.product_id,
+                        name: item.name,
+                        price: item.price,
+                        quantity: item.quantity,
+                        image: item.image
+                    }))
+            }));
+
+            res.json({
+                success: true,
+                orders: finalOrders
+            });
+        });
+    });
+});
+// Get all order items
+app.get("/api/order-items", (req, res) => {
+    const sql = "SELECT * FROM order_items";
 
     db.query(sql, (err, results) => {
         if (err) {
@@ -82,7 +146,7 @@ app.get("/api/orders", (req, res) => {
 
         res.json({
             success: true,
-            orders: results
+            items: results
         });
     });
 });

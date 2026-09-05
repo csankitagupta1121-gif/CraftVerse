@@ -90,95 +90,142 @@
 
 <script src="js/main.js"></script>
 <script>
-    function renderOrders() {
+    async function renderOrders() {
         const container = document.getElementById("ordersListContainer");
         const emptyView = document.getElementById("emptyOrdersView");
 
-        let orders = JSON.parse(localStorage.getItem("craftverse_user_orders"));
+        try {
+            // Get orders from MySQL
+            const orderResponse = await fetch("http://localhost:3000/api/orders");
+            const orderData = await orderResponse.json();
 
-        // Fallback default sample orders if none exist
-        if (!orders || orders.length === 0) {
-            orders = [
-                {
-                    id: "CV-1001",
-                    customer: "Guest User",
-                    phone: "9876543210",
-                    address: "Flat 201, Rosewood Heights, Mumbai, Maharashtra - 400001",
-                    total: 250,
-                    orderDate: "05 August 2026",
-                    status: "Delivered",
-                    paymentMethod: "Cash on Delivery",
-                    items: [
-                        { name: "Handmade Bracelet", price: 250, quantity: 1, image: "images/bracelet.jpg" }
-                    ]
-                },
-                {
-                    id: "CV-1002",
-                    customer: "Guest User",
-                    phone: "9876543210",
-                    address: "Flat 201, Rosewood Heights, Mumbai, Maharashtra - 400001",
-                    total: 400,
-                    orderDate: "08 August 2026",
-                    status: "Shipped",
-                    paymentMethod: "Online UPI",
-                    items: [
-                        { name: "Clay Pot", price: 400, quantity: 1, image: "images/claypot.jpg" }
-                    ]
-                }
-            ];
-        }
+            // Get order items from MySQL
+            const itemResponse = await fetch("http://localhost:3000/api/order-items");
+            const itemData = await itemResponse.json();
 
-        if (orders.length === 0) {
-            container.style.display = "none";
-            emptyView.style.display = "block";
-            return;
-        }
+            if (!orderData.success || !itemData.success) {
+                throw new Error("Unable to load orders");
+            }
 
-        container.style.display = "block";
-        emptyView.style.display = "none";
+            const orders = orderData.orders;
+            const items = itemData.items;
 
-        container.innerHTML = orders.map(order => {
-            const statusClass = `status-${order.status || 'Placed'}`;
-            const itemsHtml = (order.items && order.items.length > 0)
-                ? order.items.map(item => `
-                    <div class="order-item-row">
-                        <img src="${item.image || 'images/bracelet.jpg'}" alt="${item.name}" style="width: 50px; height: 50px; object-fit: cover; border-radius: 6px;">
-                        <div style="flex: 1;">
-                            <h4 style="margin: 0; font-size: 15px; color: var(--dark-brown);">${item.name}</h4>
-                            <p style="margin: 0; font-size: 13px; color: var(--muted);">Qty: ${item.quantity || 1} × ₹${item.price}</p>
+            if (!orders || orders.length === 0) {
+                container.style.display = "none";
+                emptyView.style.display = "block";
+                return;
+            }
+
+            container.style.display = "block";
+            emptyView.style.display = "none";
+
+            container.innerHTML = orders.map(order => {
+
+                // Find items belonging to this order
+                const orderItems = items.filter(
+                    item => Number(item.order_id) === Number(order.order_id)
+                );
+
+                const status = order.status || "Placed";
+                const statusClass = `status-${status}`;
+
+                const itemsHtml = orderItems.length > 0
+                    ? orderItems.map(item => `
+                        <div class="order-item-row">
+                            <img
+                                src="${item.image || 'images/bracelet.jpg'}"
+                                alt="${item.name}"
+                                style="width: 50px; height: 50px; object-fit: cover; border-radius: 6px;"
+                            >
+
+                            <div style="flex: 1;">
+                                <h4 style="margin: 0; font-size: 15px; color: var(--dark-brown);">
+                                    ${item.name}
+                                </h4>
+
+                                <p style="margin: 0; font-size: 13px; color: var(--muted);">
+                                    Qty: ${item.quantity || 1} × ₹${item.price}
+                                </p>
+                            </div>
+
+                            <strong style="color: var(--dark-brown);">
+                                ₹${item.price * (item.quantity || 1)}
+                            </strong>
                         </div>
-                        <strong style="color: var(--dark-brown);">₹${(item.price * (item.quantity || 1))}</strong>
-                    </div>
-                `).join("")
-                : `<p>Handmade Product Order</p>`;
+                    `).join("")
+                    : `<p>Handmade Product Order</p>`;
 
-            return `
-                <div class="order-card">
-                    <div class="order-header">
-                        <div>
-                            <h3 style="margin: 0; color: var(--dark-brown); font-size: 18px;">Order #${order.id}</h3>
-                            <span style="font-size: 13px; color: var(--muted);">Placed on: ${order.orderDate || 'Recently'}</span>
-                        </div>
-                        <span class="order-status ${statusClass}">${order.status || 'Placed'}</span>
-                    </div>
+                return `
+                    <div class="order-card">
 
-                    <div class="order-items-box" style="margin: 15px 0;">
-                        ${itemsHtml}
-                    </div>
+                        <div class="order-header">
+                            <div>
+                                <h3 style="margin: 0; color: var(--dark-brown); font-size: 18px;">
+                                    Order #CV-${order.order_id}
+                                </h3>
 
-                    <div style="display: flex; justify-content: space-between; align-items: center; border-top: 1px solid var(--border); padding-top: 12px; flex-wrap: wrap; gap: 10px;">
-                        <div style="font-size: 13px; color: var(--muted);">
-                            <strong>Delivery To:</strong> ${order.address || 'Address on file'}<br>
-                            <strong>Payment:</strong> ${order.paymentMethod || 'Cash on Delivery'}
+                                <span style="font-size: 13px; color: var(--muted);">
+                                    Placed on: ${order.orderDate || "Recently"}
+                                </span>
+                            </div>
+
+                            <span class="order-status ${statusClass}">
+                                ${status}
+                            </span>
                         </div>
-                        <div style="text-align: right;">
-                            <span style="font-size: 13px; color: var(--muted);">Total Amount:</span><br>
-                            <strong style="font-size: 20px; color: var(--dark-brown);">₹${order.total}</strong>
+
+                        <div class="order-items-box" style="margin: 15px 0;">
+                            ${itemsHtml}
                         </div>
+
+                        <div style="
+                            display: flex;
+                            justify-content: space-between;
+                            align-items: center;
+                            border-top: 1px solid var(--border);
+                            padding-top: 12px;
+                            flex-wrap: wrap;
+                            gap: 10px;
+                        ">
+
+                            <div style="font-size: 13px; color: var(--muted);">
+                                <strong>Delivery To:</strong>
+                                ${order.address || "Address on file"}
+                                <br>
+
+                                <strong>Payment:</strong>
+                                ${order.paymentMethod || "Cash on Delivery"}
+                            </div>
+
+                            <div style="text-align: right;">
+                                <span style="font-size: 13px; color: var(--muted);">
+                                    Total Amount:
+                                </span>
+                                <br>
+
+                                <strong style="
+                                    font-size: 20px;
+                                    color: var(--dark-brown);
+                                ">
+                                    ₹${order.totalAmount || order.total || 0}
+                                </strong>
+                            </div>
+
+                        </div>
+
                     </div>
-                </div>
+                `;
+            }).join("");
+
+        } catch (error) {
+            console.error("Orders Error:", error);
+
+            container.innerHTML = `
+                <p style="text-align:center; color:#a33; padding:30px;">
+                    ❌ Unable to load orders from database.
+                </p>
             `;
-        }).join("");
+        }
     }
 
     document.addEventListener("DOMContentLoaded", () => {
