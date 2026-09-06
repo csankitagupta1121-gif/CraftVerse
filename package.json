@@ -1,18 +1,24 @@
 {
   "name": "craftverse",
   "version": "1.0.0",
-  "description": "",
-  "main": "index.js",
+  "description": "CraftVerse - Handmade Artisanal Marketplace Web Application",
+  "main": "backend/server.js",
   "scripts": {
+    "start": "node backend/server.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
-  "keywords": [],
-  "author": "",
+  "keywords": [
+    "ecommerce",
+    "crafts",
+    "handmade",
+    "mysql",
+    "nodejs",
+    "express"
+  ],
+  "author": "CraftVerse Team",
   "license": "ISC",
-  "type": "commonjs",
   "dependencies": {
     "express": "^5.2.1",
-    "mongoose": "^9.8.0",
     "mysql2": "^3.24.2"
   }
 }

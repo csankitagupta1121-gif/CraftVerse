@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -14,6 +15,7 @@
             margin-bottom: 20px;
             box-shadow: 0 4px 12px var(--shadow);
         }
+
         .order-header {
             display: flex;
             justify-content: space-between;
@@ -24,15 +26,29 @@
             flex-wrap: wrap;
             gap: 10px;
         }
+
         .order-status {
             padding: 5px 12px;
             border-radius: 20px;
             font-size: 13px;
             font-weight: bold;
         }
-        .status-Placed { background: #fff2cc; color: #b25900; }
-        .status-Shipped { background: #cfe2f3; color: #0b5394; }
-        .status-Delivered { background: #d9ead3; color: #274e13; }
+
+        .status-Placed {
+            background: #fff2cc;
+            color: #b25900;
+        }
+
+        .status-Shipped {
+            background: #cfe2f3;
+            color: #0b5394;
+        }
+
+        .status-Delivered {
+            background: #d9ead3;
+            color: #274e13;
+        }
+
         .order-item-row {
             display: flex;
             align-items: center;
@@ -43,94 +59,99 @@
         }
     </style>
 </head>
+
 <body>
-<!-- ================= HEADER ================= -->
-<header>
-    <h1>CraftVerse</h1>
-    <nav>
-        <a href="index.html">Home</a>
-        <a href="products.html">Products</a>
-        <a href="cart.html">Cart <span class="cart-count-badge" style="display:none;">0</span></a>
-        <a href="contact.html">Contact</a>
-        <span id="nav-auth-links">
-            <a href="login.html">Login</a>
-        </span>
-        <a href="admin.html">Admin</a>
-    </nav>
-</header>
+    <!-- ================= HEADER ================= -->
+    <header>
+        <h1>CraftVerse</h1>
+        <nav>
+            <a href="index.html">Home</a>
+            <a href="products.html">Products</a>
+            <a href="cart.html">Cart <span class="cart-count-badge" style="display:none;">0</span></a>
+            <a href="contact.html">Contact</a>
+            <span id="nav-auth-links">
+                <a href="login.html">Login</a>
+            </span>
+            <a href="admin.html">Admin</a>
+        </nav>
+    </header>
 
-<main>
-    <section class="orders-section">
-        <h2>My Orders</h2>
-        <p class="section-intro">
-            View your active and previous CraftVerse orders along with their real-time delivery status.
-        </p>
+    <main>
+        <section class="orders-section">
+            <h2>My Orders</h2>
+            <p class="section-intro">
+                View your active and previous CraftVerse orders along with their real-time delivery status.
+            </p>
 
-        <!-- Orders Container (Dynamic) -->
-        <div class="orders-container" id="ordersListContainer">
-            <!-- JavaScript will render orders here -->
-        </div>
+            <!-- Orders Container (Dynamic) -->
+            <div class="orders-container" id="ordersListContainer">
+                <!-- JavaScript will render orders here -->
+            </div>
 
-        <!-- Empty Orders State -->
-        <div id="emptyOrdersView" style="display: none; text-align: center; padding: 40px 20px;">
-            <div style="font-size: 60px; margin-bottom: 15px;">📦</div>
-            <h3>No Orders Placed Yet</h3>
-            <p style="margin: 15px 0 25px; color: var(--muted);">You haven't placed any orders yet. Discover unique handmade items today!</p>
-            <a href="products.html" class="btn">Start Shopping Now</a>
-        </div>
-    </section>
-</main>
+            <!-- Empty Orders State -->
+            <div id="emptyOrdersView" style="display: none; text-align: center; padding: 40px 20px;">
+                <div style="font-size: 60px; margin-bottom: 15px;">📦</div>
+                <h3>No Orders Placed Yet</h3>
+                <p style="margin: 15px 0 25px; color: var(--muted);">You haven't placed any orders yet. Discover unique
+                    handmade items today!</p>
+                <a href="products.html" class="btn">Start Shopping Now</a>
+            </div>
+        </section>
+    </main>
 
-<footer>
-    <p>© 2026 CraftVerse. All Rights Reserved.</p>
-</footer>
+    <footer>
+        <p>© 2026 CraftVerse. All Rights Reserved.</p>
+    </footer>
 
-<!-- Toast Notification -->
-<div id="toast-notification" class="toast-notification"></div>
+    <!-- Toast Notification -->
+    <div id="toast-notification" class="toast-notification"></div>
 
-<script src="js/main.js"></script>
-<script>
-    async function renderOrders() {
-        const container = document.getElementById("ordersListContainer");
-        const emptyView = document.getElementById("emptyOrdersView");
+    <script src="js/main.js"></script>
+    <script>
+        async function renderOrders() {
+            const container = document.getElementById("ordersListContainer");
+            const emptyView = document.getElementById("emptyOrdersView");
 
-        try {
-            // Get orders from MySQL
-            const orderResponse = await fetch("http://localhost:3000/api/orders");
-            const orderData = await orderResponse.json();
+            try {
+                // 1. Current logged-in user check karein
+                const user = JSON.parse(localStorage.getItem("craftverse_user"));
 
-            // Get order items from MySQL
-            const itemResponse = await fetch("http://localhost:3000/api/order-items");
-            const itemData = await itemResponse.json();
+                // 2. Backend API se orders fetch karein
+                const orderResponse = await fetch("http://localhost:3000/api/orders");
+                const orderData = await orderResponse.json();
 
-            if (!orderData.success || !itemData.success) {
-                throw new Error("Unable to load orders");
-            }
+                if (!orderData.success) {
+                    throw new Error("Unable to load orders");
+                }
 
-            const orders = orderData.orders;
-            const items = itemData.items;
+                let orders = orderData.orders || [];
 
-            if (!orders || orders.length === 0) {
-                container.style.display = "none";
-                emptyView.style.display = "block";
-                return;
-            }
+                // 3. Customer Privacy Filter: Logged-in user ko sirf apne orders dikhein
+                if (user && user.email && user.role !== "admin") {
+                    orders = orders.filter(o => o.email === user.email);
+                }
 
-            container.style.display = "block";
-            emptyView.style.display = "none";
+                // Agar koi order nahi hai
+                if (orders.length === 0) {
+                    container.style.display = "none";
+                    emptyView.style.display = "block";
+                    return;
+                }
 
-            container.innerHTML = orders.map(order => {
+                container.style.display = "block";
+                emptyView.style.display = "none";
 
-                // Find items belonging to this order
-                const orderItems = items.filter(
-                    item => Number(item.order_id) === Number(order.order_id)
-                );
+                // 4. Orders ko Render karein
+                container.innerHTML = orders.map(order => {
+                    // Bug fix: backend se 'id' aata hai
+                    const orderIdNumber = order.id || order.order_id || "1001";
+                    const status = order.status || "Placed";
+                    const statusClass = `status-${status}`;
+                    const orderItems = order.items || [];
 
-                const status = order.status || "Placed";
-                const statusClass = `status-${status}`;
-
-                const itemsHtml = orderItems.length > 0
-                    ? orderItems.map(item => `
+                    // Products list render karein
+                    const itemsHtml = orderItems.length > 0
+                        ? orderItems.map(item => `
                         <div class="order-item-row">
                             <img
                                 src="${item.image || 'images/bracelet.jpg'}"
@@ -153,19 +174,18 @@
                             </strong>
                         </div>
                     `).join("")
-                    : `<p>Handmade Product Order</p>`;
+                        : `<p style="color: var(--muted); font-size: 13px; padding: 5px 0;">Handmade craft items included in this order.</p>`;
 
-                return `
+                    return `
                     <div class="order-card">
-
                         <div class="order-header">
                             <div>
                                 <h3 style="margin: 0; color: var(--dark-brown); font-size: 18px;">
-                                    Order #CV-${order.order_id}
+                                    Order #CV-${orderIdNumber}
                                 </h3>
 
                                 <span style="font-size: 13px; color: var(--muted);">
-                                    Placed on: ${order.orderDate || "Recently"}
+                                    Placed on: ${order.orderDate ? new Date(order.orderDate).toLocaleDateString("en-GB", { day: '2-digit', month: 'short', year: 'numeric' }) : "Recently"}
                                 </span>
                             </div>
 
@@ -187,50 +207,38 @@
                             flex-wrap: wrap;
                             gap: 10px;
                         ">
-
                             <div style="font-size: 13px; color: var(--muted);">
-                                <strong>Delivery To:</strong>
-                                ${order.address || "Address on file"}
-                                <br>
-
-                                <strong>Payment:</strong>
-                                ${order.paymentMethod || "Cash on Delivery"}
+                                <strong>Delivery To:</strong> ${order.address || "Address on file"}<br>
+                                <strong>Payment:</strong> ${order.paymentMethod || "Cash on Delivery"}
                             </div>
 
                             <div style="text-align: right;">
                                 <span style="font-size: 13px; color: var(--muted);">
                                     Total Amount:
-                                </span>
-                                <br>
-
-                                <strong style="
-                                    font-size: 20px;
-                                    color: var(--dark-brown);
-                                ">
-                                    ₹${order.totalAmount || order.total || 0}
+                                </span><br>
+                                <strong style="font-size: 20px; color: var(--dark-brown);">
+                                    ₹${order.total || order.totalAmount || 0}
                                 </strong>
                             </div>
-
                         </div>
-
                     </div>
                 `;
-            }).join("");
+                }).join("");
 
-        } catch (error) {
-            console.error("Orders Error:", error);
-
-            container.innerHTML = `
+            } catch (error) {
+                console.error("Orders Error:", error);
+                container.innerHTML = `
                 <p style="text-align:center; color:#a33; padding:30px;">
                     ❌ Unable to load orders from database.
                 </p>
             `;
+            }
         }
-    }
 
-    document.addEventListener("DOMContentLoaded", () => {
-        renderOrders();
-    });
-</script>
+        document.addEventListener("DOMContentLoaded", () => {
+            renderOrders();
+        });
+    </script>
 </body>
+
 </html>

@@ -1,260 +1,159 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Products | CraftVerse</title>
     <link rel="stylesheet" href="css/style.css">
 </head>
+
 <body>
-<!-- ================= HEADER ================= -->
-<header>
-    <h1>CraftVerse</h1>
-    <nav>
-        <a href="index.html">Home</a>
-        <a href="products.html" class="active">Products</a>
-        <a href="cart.html">Cart <span class="cart-count-badge" style="display:none;">0</span></a>
-        <a href="contact.html">Contact</a>
-        <span id="nav-auth-links">
-            <a href="login.html">Login</a>
-        </span>
-        <a href="admin.html">Admin</a>
-    </nav>
-</header>
+    <!-- ================= HEADER ================= -->
+    <header>
+        <h1>CraftVerse</h1>
+        <nav>
+            <a href="index.html">Home</a>
+            <a href="products.html" class="active">Products</a>
+            <a href="cart.html">Cart <span class="cart-count-badge" style="display:none;">0</span></a>
+            <a href="contact.html">Contact</a>
+            <span id="nav-auth-links">
+                <a href="login.html">Login</a>
+            </span>
+            <a href="admin.html">Admin</a>
+        </nav>
+    </header>
 
-<main>
-    <section class="products-section">
-        <h2>Our Handmade Products</h2>
-        <p class="section-intro">
-            Explore our collection of beautiful handmade products,
-            carefully created by talented artisans.
-        </p>
+    <main>
+        <section class="products-section">
+            <h2>Our Handmade Products</h2>
+            <p class="section-intro">
+                Explore our collection of beautiful handmade products,
+                carefully created by talented artisans.
+            </p>
 
-        <!-- Search Bar & Category Filters -->
-        <div class="filter-controls" style="display: flex; justify-content: center; gap: 15px; margin-bottom: 30px; flex-wrap: wrap;">
-            <input
-                type="text"
-                id="productSearchInput"
-                placeholder="🔍 Search crafts..."
-                onkeyup="filterProducts()"
-                style="padding: 10px 16px; border: 1px solid var(--border); border-radius: 25px; min-width: 260px; outline: none; background: #fff;">
-            
-            <div class="category-pills" style="display: flex; gap: 8px; flex-wrap: wrap;">
-                <button type="button" class="btn filter-btn active-filter" onclick="filterCategory('all', this)">All</button>
-                <button type="button" class="btn filter-btn" onclick="filterCategory('Accessories', this)">Accessories</button>
-                <button type="button" class="btn filter-btn" onclick="filterCategory('Decor', this)">Home Decor</button>
-                <button type="button" class="btn filter-btn" onclick="filterCategory('Living', this)">Living & Dining</button>
-            </div>
-        </div>
+            <!-- Search Bar & Category Filters -->
+            <div class="filter-controls"
+                style="display: flex; justify-content: center; gap: 15px; margin-bottom: 30px; flex-wrap: wrap;">
+                <input type="text" id="productSearchInput" placeholder="🔍 Search crafts..." onkeyup="filterProducts()"
+                    style="padding: 10px 16px; border: 1px solid var(--border); border-radius: 25px; min-width: 260px; outline: none; background: #fff;">
 
-        <div class="product-container" id="products-grid">
-            <!-- PRODUCT 1 -->
-            <div class="product" data-name="Handmade Bracelet" data-category="Accessories">
-                <a href="product-details.html?id=1" style="text-decoration: none; color: inherit;">
-                    <img src="images/bracelet.jpg" class="product-img" alt="Handmade Bracelet">
-                </a>
-                <div class="product-content">
-                    <a href="product-details.html?id=1" style="text-decoration: none; color: inherit;">
-                        <h3>Handmade Bracelet</h3>
-                    </a>
-                    <p class="product-description">
-                        Beautiful handcrafted bracelet perfect for daily wear and gifting.
-                    </p>
-                    <p class="product-price">
-                        <strong>₹250</strong>
-                    </p>
-                    <button type="button" class="btn" onclick="addToCart({id: '1', name: 'Handmade Bracelet', price: 250, image: 'images/bracelet.jpg'})">
-                        Add to Cart
-                    </button>
+                <div class="category-pills" style="display: flex; gap: 8px; flex-wrap: wrap;">
+                    <button type="button" class="btn filter-btn active-filter"
+                        onclick="filterCategory('all', this)">All</button>
+                    <button type="button" class="btn filter-btn"
+                        onclick="filterCategory('Accessories', this)">Accessories</button>
+                    <button type="button" class="btn filter-btn" onclick="filterCategory('Decor', this)">Home
+                        Decor</button>
+                    <button type="button" class="btn filter-btn" onclick="filterCategory('Living', this)">Living &
+                        Dining</button>
                 </div>
             </div>
 
-            <!-- PRODUCT 2 -->
-            <div class="product" data-name="Clay Pot" data-category="Decor">
-                <a href="product-details.html?id=2" style="text-decoration: none; color: inherit;">
-                    <img src="images/claypot.jpg" class="product-img" alt="Clay Pot">
-                </a>
-                <div class="product-content">
-                    <a href="product-details.html?id=2" style="text-decoration: none; color: inherit;">
-                        <h3>Clay Pot</h3>
-                    </a>
-                    <p class="product-description">
-                        Classic handmade clay pot ideal for home decoration.
-                    </p>
-                    <p class="product-price">
-                        <strong>₹400</strong>
-                    </p>
-                    <button type="button" class="btn" onclick="addToCart({id: '2', name: 'Clay Pot', price: 400, image: 'images/claypot.jpg'})">
-                        Add to Cart
-                    </button>
-                </div>
+            <div class="product-container" id="products-grid">
+                <p style="text-align: center; width: 100%; color: var(--muted); padding: 40px;">
+                    ⏳ Loading authentic handmade crafts from database...
+                </p>
             </div>
+        </section>
+    </main>
 
-            <!-- PRODUCT 3 -->
-            <div class="product" data-name="Wooden Photo Frame" data-category="Decor">
-                <a href="product-details.html?id=3" style="text-decoration: none; color: inherit;">
-                    <img src="images/frame.jpg" class="product-img" alt="Wooden Photo Frame">
-                </a>
-                <div class="product-content">
-                    <a href="product-details.html?id=3" style="text-decoration: none; color: inherit;">
-                        <h3>Wooden Photo Frame</h3>
-                    </a>
-                    <p class="product-description">
-                        Premium wooden frame crafted to preserve your memories beautifully.
-                    </p>
-                    <p class="product-price">
-                        <strong>₹550</strong>
-                    </p>
-                    <button type="button" class="btn" onclick="addToCart({id: '3', name: 'Wooden Photo Frame', price: 550, image: 'images/frame.jpg'})">
-                        Add to Cart
-                    </button>
-                </div>
-            </div>
+    <footer>
+        <p>© 2026 CraftVerse. All Rights Reserved.</p>
+    </footer>
 
-            <!-- PRODUCT 4 -->
-            <div class="product" data-name="Decorative Flower Vase" data-category="Decor">
-                <a href="product-details.html?id=4" style="text-decoration: none; color: inherit;">
-                    <img src="images/vase.jpg" class="product-img" alt="Decorative Flower Vase">
-                </a>
-                <div class="product-content">
-                    <a href="product-details.html?id=4" style="text-decoration: none; color: inherit;">
-                        <h3>Decorative Flower Vase</h3>
-                    </a>
-                    <p class="product-description">
-                        Elegant handmade vase that adds a beautiful touch to your home.
-                    </p>
-                    <p class="product-price">
-                        <strong>₹350</strong>
-                    </p>
-                    <button type="button" class="btn" onclick="addToCart({id: '4', name: 'Decorative Flower Vase', price: 350, image: 'images/vase.jpg'})">
-                        Add to Cart
-                    </button>
-                </div>
-            </div>
+    <!-- Toast Notification Container -->
+    <div id="toast-notification" class="toast-notification"></div>
 
-            <!-- PRODUCT 5 -->
-            <div class="product" data-name="Macrame Wall Hanging" data-category="Decor">
-                <a href="product-details.html?id=5" style="text-decoration: none; color: inherit;">
-                    <img src="images/macrame.jpg" class="product-img" alt="Macrame Wall Hanging">
-                </a>
-                <div class="product-content">
-                    <a href="product-details.html?id=5" style="text-decoration: none; color: inherit;">
-                        <h3>Macrame Wall Hanging</h3>
-                    </a>
-                    <p class="product-description">
-                        Handmade macrame wall hanging perfect for stylish home interiors.
-                    </p>
-                    <p class="product-price">
-                        <strong>₹650</strong>
-                    </p>
-                    <button type="button" class="btn" onclick="addToCart({id: '5', name: 'Macrame Wall Hanging', price: 650, image: 'images/macrame.jpg'})">
-                        Add to Cart
-                    </button>
-                </div>
-            </div>
+    <!-- Scripts -->
+    <script src="js/main.js"></script>
+    <script>
+        let allProducts = [];
+        let currentCategory = 'all';
 
-            <!-- PRODUCT 6 -->
-            <div class="product" data-name="Handmade Bag" data-category="Accessories">
-                <a href="product-details.html?id=6" style="text-decoration: none; color: inherit;">
-                    <img src="images/bag.jpg" class="product-img" alt="Handmade Bag">
-                </a>
-                <div class="product-content">
-                    <a href="product-details.html?id=6" style="text-decoration: none; color: inherit;">
-                        <h3>Handmade Bag</h3>
-                    </a>
-                    <p class="product-description">
-                        Eco-friendly handmade bag designed for everyday use.
-                    </p>
-                    <p class="product-price">
-                        <strong>₹750</strong>
-                    </p>
-                    <button type="button" class="btn" onclick="addToCart({id: '6', name: 'Handmade Bag', price: 750, image: 'images/bag.jpg'})">
-                        Add to Cart
-                    </button>
-                </div>
-            </div>
+        // 1. MySQL Database se products fetch karna
+        async function fetchProductsFromDB() {
+            const grid = document.getElementById("products-grid");
 
-            <!-- PRODUCT 7 -->
-            <div class="product" data-name="Scented Candle" data-category="Living">
-                <a href="product-details.html?id=7" style="text-decoration: none; color: inherit;">
-                    <img src="images/candle.jpg" class="product-img" alt="Handmade Scented Candle">
-                </a>
-                <div class="product-content">
-                    <a href="product-details.html?id=7" style="text-decoration: none; color: inherit;">
-                        <h3>Scented Candle</h3>
-                    </a>
-                    <p class="product-description">
-                        Beautiful handmade scented candle perfect for creating a relaxing atmosphere.
-                    </p>
-                    <p class="product-price">
-                        <strong>₹450</strong>
-                    </p>
-                    <button type="button" class="btn" onclick="addToCart({id: '7', name: 'Scented Candle', price: 450, image: 'images/candle.jpg'})">
-                        Add to Cart
-                    </button>
-                </div>
-            </div>
+            try {
+                const response = await fetch("http://localhost:3000/api/products");
+                const data = await response.json();
 
-            <!-- PRODUCT 8 -->
-            <div class="product" data-name="Wooden Bowl" data-category="Living">
-                <a href="product-details.html?id=8" style="text-decoration: none; color: inherit;">
-                    <img src="images/bowl.jpg" class="product-img" alt="Wooden Bowl">
-                </a>
-                <div class="product-content">
-                    <a href="product-details.html?id=8" style="text-decoration: none; color: inherit;">
-                        <h3>Wooden Bowl</h3>
-                    </a>
-                    <p class="product-description">
-                        Beautiful handcrafted wooden bowl with a natural and elegant finish.
-                    </p>
-                    <p class="product-price">
-                        <strong>₹300</strong>
-                    </p>
-                    <button type="button" class="btn" onclick="addToCart({id: '8', name: 'Wooden Bowl', price: 300, image: 'images/bowl.jpg'})">
-                        Add to Cart
-                    </button>
-                </div>
-            </div>
-        </div>
-    </section>
-</main>
-
-<footer>
-    <p>© 2026 CraftVerse. All Rights Reserved.</p>
-</footer>
-
-<!-- Toast Notification Container -->
-<div id="toast-notification" class="toast-notification"></div>
-
-<!-- Scripts -->
-<script src="js/main.js"></script>
-<script>
-    let currentCategory = 'all';
-
-    function filterProducts() {
-        const searchVal = document.getElementById("productSearchInput").value.toLowerCase();
-        const products = document.querySelectorAll("#products-grid .product");
-
-        products.forEach(prod => {
-            const name = prod.getAttribute("data-name").toLowerCase();
-            const category = prod.getAttribute("data-category");
-            const matchesSearch = name.includes(searchVal);
-            const matchesCategory = currentCategory === 'all' || category === currentCategory;
-
-            if (matchesSearch && matchesCategory) {
-                prod.style.display = "flex";
-            } else {
-                prod.style.display = "none";
+                if (data.success && data.products && data.products.length > 0) {
+                    allProducts = data.products;
+                    renderProducts(allProducts);
+                } else {
+                    grid.innerHTML = `<p style="text-align: center; width: 100%; color: var(--muted);">No products found in the database.</p>`;
+                }
+            } catch (error) {
+                console.error("Database fetch error:", error);
+                grid.innerHTML = `
+                <p style="text-align: center; width: 100%; color: #a33; padding: 30px;">
+                    ❌ Unable to connect to server. Please make sure Node.js server and MySQL are running!
+                </p>
+            `;
             }
-        });
-    }
+        }
 
-    function filterCategory(cat, btnElement) {
-        currentCategory = cat;
-        document.querySelectorAll(".filter-btn").forEach(btn => btn.classList.remove("active-filter"));
-        if (btnElement) btnElement.classList.add("active-filter");
-        filterProducts();
-    }
-</script>
+        // 2. Products ko HTML Grid me display karna
+        function renderProducts(productsToDisplay) {
+            const grid = document.getElementById("products-grid");
+
+            if (productsToDisplay.length === 0) {
+                grid.innerHTML = `<p style="text-align: center; width: 100%; color: var(--muted); padding: 40px;">No products match your search or filter.</p>`;
+                return;
+            }
+
+            grid.innerHTML = productsToDisplay.map(prod => `
+            <div class="product" data-name="${prod.name}" data-category="${prod.category}">
+                <a href="product-details.html?id=${prod.product_id}" style="text-decoration: none; color: inherit;">
+                    <img src="${prod.image || 'images/bracelet.jpg'}" class="product-img" alt="${prod.name}">
+                </a>
+                <div class="product-content">
+                    <a href="product-details.html?id=${prod.product_id}" style="text-decoration: none; color: inherit;">
+                        <h3>${prod.name}</h3>
+                    </a>
+                    <p class="product-description">
+                        ${prod.description || 'Authentic handmade artisanal craft.'}
+                    </p>
+                    <p class="product-price">
+                        <strong>₹${Number(prod.price)}</strong>
+                    </p>
+                    <button type="button" class="btn" onclick="addToCart({id: '${prod.product_id}', name: '${prod.name}', price: ${prod.price}, image: '${prod.image}'})">
+                        Add to Cart
+                    </button>
+                </div>
+            </div>
+        `).join("");
+        }
+
+        // 3. Real-time Search Filter
+        function filterProducts() {
+            const searchVal = document.getElementById("productSearchInput").value.toLowerCase().trim();
+
+            const filtered = allProducts.filter(prod => {
+                const matchesSearch = prod.name.toLowerCase().includes(searchVal) ||
+                    (prod.description && prod.description.toLowerCase().includes(searchVal));
+                const matchesCategory = currentCategory === 'all' || prod.category === currentCategory;
+                return matchesSearch && matchesCategory;
+            });
+
+            renderProducts(filtered);
+        }
+
+        // 4. Category Filter Buttons
+        function filterCategory(cat, btnElement) {
+            currentCategory = cat;
+            document.querySelectorAll(".filter-btn").forEach(btn => btn.classList.remove("active-filter"));
+            if (btnElement) btnElement.classList.add("active-filter");
+            filterProducts();
+        }
+
+        // Page load hone par database se fetch karein
+        document.addEventListener("DOMContentLoaded", () => {
+            fetchProductsFromDB();
+        });
+    </script>
 </body>
+
 </html>
