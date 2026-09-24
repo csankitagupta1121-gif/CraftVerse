@@ -69,27 +69,39 @@
 
 <script src="js/main.js"></script>
 <script>
-    function handleAdminLogin(e) {
+    async function handleAdminLogin(e) {
         e.preventDefault();
         const email = document.getElementById("admin-email").value.trim().toLowerCase();
         const password = document.getElementById("admin-password").value;
 
-        // Default admin credentials check
-        if (email === "admin@craftverse.com" && password === "admin123") {
-            const adminUser = {
-                name: "Super Admin",
-                email: email,
-                role: "admin"
-            };
-            localStorage.setItem("craftverse_user", JSON.stringify(adminUser));
-            localStorage.setItem("craftverse_admin_logged", "true");
+        try {
+            const res = await fetch("/api/login", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ email, password })
+            });
 
-            showToast("Admin Login Successful! Redirecting... 🚀");
-            setTimeout(() => {
-                window.location.href = "admin.html";
-            }, 1000);
-        } else {
-            showToast("❌ Invalid Admin Email or Password!");
+            const data = await res.json();
+
+            if (data.success) {
+                if (data.user.role !== "admin") {
+                    showToast("❌ Access Denied: This account is not an Admin!");
+                    return;
+                }
+
+                localStorage.setItem("craftverse_user", JSON.stringify(data.user));
+                localStorage.setItem("craftverse_admin_logged", "true");
+
+                showToast(`Welcome Admin ${data.user.name}! Redirecting... 🚀`);
+                setTimeout(() => {
+                    window.location.href = "admin.html";
+                }, 900);
+            } else {
+                showToast(`❌ ${data.message || "Invalid Admin Email or Password!"}`);
+            }
+        } catch (error) {
+            console.error("Admin Login Error:", error);
+            showToast("❌ Unable to connect to server!");
         }
     }
 </script>

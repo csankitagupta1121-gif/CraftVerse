@@ -1,20 +1,24 @@
+require("dotenv").config({ path: require("path").join(__dirname, ".env") });
 const mysql = require("mysql2");
 
-const db = mysql.createConnection({
-    host: "localhost",
-    port: 3306,
-    user: "root",
-    password: "",
-    database: "craftverse"
+const pool = mysql.createPool({
+    host: process.env.DB_HOST || "localhost",
+    port: parseInt(process.env.DB_PORT, 10) || 3306,
+    user: process.env.DB_USER || "root",
+    password: process.env.DB_PASS || "",
+    database: process.env.DB_NAME || "craftverse",
+    waitForConnections: true,
+    connectionLimit: 10,
+    queueLimit: 0
 });
 
-db.connect((err) => {
+pool.getConnection((err, connection) => {
     if (err) {
-        console.log("Database connection failed:", err.message);
+        console.error("Database connection failed:", err.message);
         return;
     }
-
-    console.log("MySQL Database Connected");
+    console.log("MySQL Database Connected via Pool");
+    connection.release();
 });
 
-module.exports = db;
+module.exports = pool;

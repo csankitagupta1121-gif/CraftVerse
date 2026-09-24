@@ -116,8 +116,12 @@
                 // 1. Current logged-in user check karein
                 const user = JSON.parse(localStorage.getItem("craftverse_user"));
 
-                // 2. Backend API se orders fetch karein
-                const orderResponse = await fetch("http://localhost:3000/api/orders");
+                // 2. Backend API se customer-specific orders fetch karein
+                const apiUrl = (user && user.email && user.role !== "admin")
+                    ? `/api/orders?email=${encodeURIComponent(user.email)}`
+                    : "/api/orders";
+
+                const orderResponse = await fetch(apiUrl);
                 const orderData = await orderResponse.json();
 
                 if (!orderData.success) {
@@ -125,11 +129,6 @@
                 }
 
                 let orders = orderData.orders || [];
-
-                // 3. Customer Privacy Filter: Logged-in user ko sirf apne orders dikhein
-                if (user && user.email && user.role !== "admin") {
-                    orders = orders.filter(o => o.email === user.email);
-                }
 
                 // Agar koi order nahi hai
                 if (orders.length === 0) {

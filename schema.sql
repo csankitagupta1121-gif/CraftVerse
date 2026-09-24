@@ -10,7 +10,7 @@ USE craftverse;
 -- 1. Table: users
 -- ---------------------------------------------------
 CREATE TABLE IF NOT EXISTS users (
-    id INT AUTO_INCREMENT PRIMARY KEY,
+    user_id INT AUTO_INCREMENT PRIMARY KEY,
     name VARCHAR(100) NOT NULL,
     email VARCHAR(150) NOT NULL UNIQUE,
     password VARCHAR(255) NOT NULL,
@@ -31,7 +31,13 @@ CREATE TABLE IF NOT EXISTS products (
     category VARCHAR(50),
     image VARCHAR(255),
     inStock BOOLEAN DEFAULT TRUE,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    seller_id INT NULL,
+    CONSTRAINT fk_products_seller
+        FOREIGN KEY (seller_id)
+        REFERENCES users(user_id)
+        ON DELETE SET NULL
+        ON UPDATE CASCADE
 );
 
 -- ---------------------------------------------------
@@ -65,6 +71,71 @@ CREATE TABLE IF NOT EXISTS order_items (
         REFERENCES orders(order_id)
         ON DELETE CASCADE
 );
+
+-- ---------------------------------------------------
+-- Existing database migration (data-preserving and rerunnable)
+-- ---------------------------------------------------
+-- The statements below align databases created from older versions of this
+-- schema without deleting existing users, products, orders, or order items.
+DELIMITER $$
+
+DROP PROCEDURE IF EXISTS migrate_craftverse_schema$$
+
+CREATE PROCEDURE migrate_craftverse_schema()
+BEGIN
+    IF EXISTS (
+        SELECT 1
+        FROM information_schema.columns
+        WHERE table_schema = DATABASE()
+          AND table_name = 'users'
+          AND column_name = 'id'
+    ) AND NOT EXISTS (
+        SELECT 1
+        FROM information_schema.columns
+        WHERE table_schema = DATABASE()
+          AND table_name = 'users'
+          AND column_name = 'user_id'
+    ) THEN
+        ALTER TABLE users CHANGE COLUMN id user_id INT NOT NULL AUTO_INCREMENT;
+    END IF;
+
+    IF NOT EXISTS (
+        SELECT 1
+        FROM information_schema.columns
+        WHERE table_schema = DATABASE()
+          AND table_name = 'products'
+          AND column_name = 'seller_id'
+    ) THEN
+        ALTER TABLE products ADD COLUMN seller_id INT NULL AFTER inStock;
+    END IF;
+
+    IF NOT EXISTS (
+        SELECT 1
+        FROM information_schema.table_constraints
+        WHERE constraint_schema = DATABASE()
+          AND table_name = 'products'
+          AND constraint_name = 'fk_products_seller'
+          AND constraint_type = 'FOREIGN KEY'
+    ) AND NOT EXISTS (
+        SELECT 1
+        FROM products p
+        LEFT JOIN users u ON u.user_id = p.seller_id
+        WHERE p.seller_id IS NOT NULL
+          AND u.user_id IS NULL
+    ) THEN
+        ALTER TABLE products
+            ADD CONSTRAINT fk_products_seller
+            FOREIGN KEY (seller_id)
+            REFERENCES users(user_id)
+            ON DELETE SET NULL
+            ON UPDATE CASCADE;
+    END IF;
+END$$
+
+CALL migrate_craftverse_schema()$$
+DROP PROCEDURE migrate_craftverse_schema$$
+
+DELIMITER ;
 
 -- ---------------------------------------------------
 -- Sample Initial Products Data

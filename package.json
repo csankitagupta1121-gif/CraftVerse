@@ -18,7 +18,9 @@
   "author": "CraftVerse Team",
   "license": "ISC",
   "dependencies": {
+    "dotenv": "^17.4.2",
     "express": "^5.2.1",
-    "mysql2": "^3.24.2"
+    "mysql2": "^3.24.2",
+    "nodemailer": "^10.0.10"
   }
 }

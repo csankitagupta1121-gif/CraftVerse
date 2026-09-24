@@ -1,0 +1,353 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Artisan / Seller Portal - CraftVerse</title>
+    <link rel="stylesheet" href="css/style.css">
+    <style>
+        .seller-card {
+            background: #fff;
+            padding: 20px;
+            border-radius: 10px;
+            text-align: center;
+            border: 1px solid var(--border);
+            box-shadow: 0 3px 8px var(--shadow);
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        .seller-card:hover {
+            transform: translateY(-3px);
+            border-color: var(--terracotta);
+        }
+        .seller-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 15px;
+            background: #fff;
+            border-radius: 10px;
+            overflow: hidden;
+        }
+        .seller-table th, .seller-table td {
+            padding: 12px 15px;
+            text-align: left;
+            border-bottom: 1px solid var(--border);
+            font-size: 14px;
+        }
+        .seller-table th {
+            background: var(--dark-brown);
+            color: #fff;
+        }
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0, 0, 0, 0.6);
+            z-index: 2000;
+            justify-content: center;
+            align-items: center;
+        }
+        .modal-box {
+            background: var(--section-bg);
+            padding: 25px 30px;
+            border-radius: 15px;
+            max-width: 500px;
+            width: 90%;
+            max-height: 85vh;
+            overflow-y: auto;
+            border: 1px solid var(--border);
+        }
+    </style>
+</head>
+<body>
+<!-- ================= HEADER ================= -->
+<header>
+    <h1>CraftVerse <span>(Artisan / Seller Portal)</span></h1>
+    <nav>
+        <a href="index.html">View Store</a>
+        <a href="products.html">Products</a>
+        <a href="seller.html" class="active">Seller Dashboard</a>
+        <a href="#" onclick="logoutUser(event)">Logout</a>
+    </nav>
+</header>
+
+<section class="admin-section">
+    <h2>Artisan Studio</h2>
+    <p class="admin-welcome" id="sellerWelcomeMsg">Welcome to your CraftVerse Artisan Workshop</p>
+
+    <!-- SELLER STATS -->
+    <div class="admin-stats">
+        <div class="seller-card">
+            <div class="admin-icon">Crafts</div>
+            <h3>My Crafts Listed</h3>
+            <p class="admin-number" id="statSellerProducts">0</p>
+        </div>
+        <div class="seller-card">
+            <div class="admin-icon">Orders</div>
+            <h3>Total Orders with My Crafts</h3>
+            <p class="admin-number" id="statSellerOrders" style="font-weight: 700;">0</p>
+        </div>
+        <div class="seller-card">
+            <div class="admin-icon">Revenue</div>
+            <h3>Estimated Revenue</h3>
+            <p class="admin-number" id="statSellerRevenue" style="font-weight: 700;">INR 0</p>
+        </div>
+    </div>
+
+    <!-- SELLER PRODUCTS -->
+    <div class="admin-actions" style="margin-top: 40px; padding: 20px; background: rgba(255,255,255,0.4); border-radius: 12px;">
+        <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 15px; margin-bottom: 20px;">
+            <h2 style="margin: 0; text-align: left;">My Listed Handmade Crafts</h2>
+            <button type="button" class="btn" onclick="openAddModal()">Add New Craft</button>
+        </div>
+
+        <div style="overflow-x: auto;">
+            <table class="seller-table">
+                <thead>
+                    <tr>
+                        <th>Image</th>
+                        <th>Craft Name</th>
+                        <th>Category</th>
+                        <th>Price</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody id="sellerProductsTable">
+                    <tr><td colspan="5" style="text-align:center; padding: 20px;">Loading your crafts...</td></tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- SELLER RELEVANT ORDERS -->
+    <div class="admin-actions" style="margin-top: 45px; padding: 20px; background: rgba(255,255,255,0.4); border-radius: 12px; margin-bottom: 40px;">
+        <h2 style="text-align: left; margin-bottom: 20px;">Recent Sales & Orders</h2>
+        <div style="overflow-x: auto;">
+            <table class="seller-table">
+                <thead>
+                    <tr>
+                        <th>Order ID</th>
+                        <th>Customer</th>
+                        <th>Items</th>
+                        <th>Status</th>
+                        <th>Date</th>
+                    </tr>
+                </thead>
+                <tbody id="sellerOrdersTable">
+                    <tr><td colspan="5" style="text-align:center; padding: 20px;">Loading orders...</td></tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</section>
+
+<!-- ADD PRODUCT MODAL -->
+<div id="addSellerProductModal" class="modal-overlay">
+    <div class="modal-box">
+        <h3 style="margin-bottom: 15px; color: var(--dark-brown);">List New Handmade Creation</h3>
+        <form id="addSellerProdForm" onsubmit="saveSellerProduct(event)">
+            <div class="form-group" style="margin-bottom: 12px;">
+                <label>Craft Name</label>
+                <input type="text" id="sellerProdName" placeholder="e.g. Handmade Terracotta Lamp" required style="width: 100%; padding: 8px; border-radius: 6px; border: 1px solid var(--border);">
+            </div>
+            <div class="form-group" style="margin-bottom: 12px;">
+                <label>Description</label>
+                <textarea id="sellerProdDesc" placeholder="Describe the materials and artisanal technique" rows="2" style="width: 100%; padding: 8px; border-radius: 6px; border: 1px solid var(--border);"></textarea>
+            </div>
+            <div class="form-group" style="margin-bottom: 12px;">
+                <label>Category</label>
+                <select id="sellerProdCategory" style="width: 100%; padding: 8px; border-radius: 6px; border: 1px solid var(--border);">
+                    <option value="Accessories">Accessories</option>
+                    <option value="Decor">Home Decor</option>
+                    <option value="Living">Living & Dining</option>
+                </select>
+            </div>
+            <div class="form-group" style="margin-bottom: 12px;">
+                <label>Price (INR)</label>
+                <input type="number" id="sellerProdPrice" placeholder="e.g. 500" required min="1" style="width: 100%; padding: 8px; border-radius: 6px; border: 1px solid var(--border);">
+            </div>
+            <div class="form-group" style="margin-bottom: 12px;">
+                <label>Image URL / Sample Path</label>
+                <input type="text" id="sellerProdImg" placeholder="e.g. images/vase.jpg" value="images/vase.jpg" required style="width: 100%; padding: 8px; border-radius: 6px; border: 1px solid var(--border);">
+            </div>
+            <div style="display: flex; justify-content: flex-end; gap: 10px; margin-top: 20px;">
+                <button type="button" class="btn" style="background: #999;" onclick="closeAddModal()">Cancel</button>
+                <button type="submit" class="btn">List Craft</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<footer>
+    <p>2026 CraftVerse Artisan Portal. All Rights Reserved.</p>
+</footer>
+
+<!-- Toast Notification -->
+<div id="toast-notification" class="toast-notification"></div>
+
+<script src="js/main.js"></script>
+<script>
+    let myProducts = [];
+    let myOrders = [];
+    let currentUser = null;
+
+    function checkSellerAuth() {
+        currentUser = JSON.parse(localStorage.getItem("craftverse_user"));
+        const role = String(currentUser?.role || "").trim().toLowerCase();
+        if (!currentUser || (role !== "seller" && role !== "admin")) {
+            alert("Access Denied: Seller or Admin access required.");
+            window.location.href = "login.html";
+            return false;
+        }
+        document.getElementById("sellerWelcomeMsg").textContent = `Welcome Artisan, ${currentUser.name} (${currentUser.email})`;
+        return true;
+    }
+
+    async function loadSellerData() {
+        try {
+            const sellerId = currentUser.user_id || currentUser.id || "";
+
+            // 1. Fetch Products for this seller
+            const prodRes = await fetch(`/api/products?seller_id=${sellerId}`);
+            const prodData = await prodRes.json();
+            if (prodData.success) {
+                myProducts = prodData.products || [];
+            }
+
+            // 2. Fetch Orders
+            const orderRes = await fetch("/api/orders");
+            const orderData = await orderRes.json();
+            if (orderData.success) {
+                const allOrders = orderData.orders || [];
+                const myProductIds = myProducts.map(p => String(p.product_id));
+                const myProductNames = myProducts.map(p => p.name.toLowerCase());
+
+                // Filter orders that contain this seller's products
+                myOrders = allOrders.filter(order => {
+                    if (!order.items) return false;
+                    return order.items.some(item => 
+                        myProductIds.includes(String(item.product_id)) ||
+                        myProductNames.includes((item.name || "").toLowerCase())
+                    );
+                });
+            }
+
+            renderSellerView();
+        } catch (e) {
+            console.error(e);
+            showToast("Could not load seller data");
+        }
+    }
+
+    function renderSellerView() {
+        document.getElementById("statSellerProducts").textContent = myProducts.length;
+        document.getElementById("statSellerOrders").textContent = myOrders.length;
+
+        let totalRev = 0;
+        myOrders.forEach(o => {
+            if (o.items) {
+                const myProductIds = myProducts.map(p => String(p.product_id));
+                const myProductNames = myProducts.map(p => p.name.toLowerCase());
+                o.items.forEach(item => {
+                    if (myProductIds.includes(String(item.product_id)) || myProductNames.includes((item.name || '').toLowerCase())) {
+                        totalRev += (Number(item.price) * (item.quantity || 1));
+                    }
+                });
+            }
+        });
+        document.getElementById("statSellerRevenue").textContent = `INR ${totalRev}`;
+
+        // Products Table
+        const prodTbody = document.getElementById("sellerProductsTable");
+        if (myProducts.length === 0) {
+            prodTbody.innerHTML = `<tr><td colspan="5" style="text-align:center; padding: 20px; color: var(--muted);">No crafts listed by you yet. Click "Add New Craft" to start selling!</td></tr>`;
+        } else {
+            prodTbody.innerHTML = myProducts.map(p => `
+                <tr>
+                    <td><img src="${p.image || 'images/vase.jpg'}" alt="${p.name}" style="width: 45px; height: 45px; object-fit: cover; border-radius: 6px;"></td>
+                    <td><strong>${p.name}</strong></td>
+                    <td>${p.category || 'Craft'}</td>
+                    <td>?${p.price}</td>
+                    <td>
+                        <button type="button" onclick="deleteSellerProduct(${p.product_id})" style="background: none; border: none; cursor: pointer; color: #d33; font-size: 14px; font-weight: bold;">Remove</button>
+                    </td>
+                </tr>
+            `).join("");
+        }
+
+        // Orders Table
+        const orderTbody = document.getElementById("sellerOrdersTable");
+        if (myOrders.length === 0) {
+            orderTbody.innerHTML = `<tr><td colspan="5" style="text-align:center; padding: 20px; color: var(--muted);">No sales recorded for your crafts yet.</td></tr>`;
+        } else {
+            orderTbody.innerHTML = myOrders.map(o => `
+                <tr>
+                    <td><strong>#CV-${String(o.id || o.order_id).padStart(4, '0')}</strong></td>
+                    <td>${o.customer}</td>
+                    <td>${(o.items || []).map(i => `${i.name} (x${i.quantity || 1})`).join(", ")}</td>
+                    <td><span style="background: #e2f0d9; color: #274e13; padding: 3px 8px; border-radius: 8px; font-size: 12px; font-weight: bold;">${o.status}</span></td>
+                    <td>${o.orderDate ? new Date(o.orderDate).toLocaleDateString("en-GB") : 'Recently'}</td>
+                </tr>
+            `).join("");
+        }
+    }
+
+    async function saveSellerProduct(e) {
+        e.preventDefault();
+        const name = document.getElementById("sellerProdName").value.trim();
+        const description = document.getElementById("sellerProdDesc").value.trim();
+        const category = document.getElementById("sellerProdCategory").value;
+        const price = Number(document.getElementById("sellerProdPrice").value);
+        const image = document.getElementById("sellerProdImg").value.trim() || "images/vase.jpg";
+        const seller_id = currentUser.user_id || currentUser.id || null;
+
+        try {
+            const res = await fetch("/api/products", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ name, description, category, price, image, seller_id })
+            });
+            const data = await res.json();
+            if (data.success) {
+                showToast("Craft listed successfully on CraftVerse!");
+                closeAddModal();
+                document.getElementById("addSellerProdForm").reset();
+                loadSellerData();
+            } else {
+                showToast(`? ${data.message}`);
+            }
+        } catch (e) {
+            showToast("Error saving craft");
+        }
+    }
+
+    async function deleteSellerProduct(prodId) {
+        if (!confirm(`Are you sure you want to remove Craft #${prodId}?`)) return;
+        try {
+            const res = await fetch(`/api/products/${prodId}`, { method: "DELETE" });
+            const data = await res.json();
+            if (data.success) {
+                showToast("Craft removed successfully!");
+                loadSellerData();
+            }
+        } catch (e) {
+            showToast("Error deleting craft");
+        }
+    }
+
+    function openAddModal() {
+        document.getElementById("addSellerProductModal").style.display = "flex";
+    }
+
+    function closeAddModal() {
+        document.getElementById("addSellerProductModal").style.display = "none";
+    }
+
+    document.addEventListener("DOMContentLoaded", () => {
+        if (checkSellerAuth()) {
+            loadSellerData();
+        }
+    });
+</script>
+</body>
+</html>
