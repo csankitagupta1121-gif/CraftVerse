@@ -190,11 +190,17 @@
     let myProducts = [];
     let myOrders = [];
     let currentUser = null;
+    let editingSellerProductId = null;
 
-    function checkSellerAuth() {
-        currentUser = JSON.parse(localStorage.getItem("craftverse_user"));
-        const role = String(currentUser?.role || "").trim().toLowerCase();
-        if (!currentUser || (role !== "seller" && role !== "admin")) {
+    async function checkSellerAuth() {
+        try {
+            const response = await fetch("/api/session");
+            const data = await response.json();
+            const role = String(data.user?.role || "").trim().toLowerCase();
+            if (!response.ok || !data.success || (role !== "seller" && role !== "admin")) throw new Error("Seller access required.");
+            currentUser = data.user;
+            localStorage.setItem("craftverse_user", JSON.stringify(currentUser));
+        } catch (error) {
             alert("Access Denied: Seller or Admin access required.");
             window.location.href = "login.html";
             return false;
@@ -208,34 +214,23 @@
             const sellerId = currentUser.user_id || currentUser.id || "";
 
             // 1. Fetch Products for this seller
-            const prodRes = await fetch(`/api/products?seller_id=${sellerId}`);
+            const prodRes = await fetch(`/api/products?seller_id=${encodeURIComponent(sellerId)}`);
             const prodData = await prodRes.json();
-            if (prodData.success) {
-                myProducts = prodData.products || [];
-            }
+            if (!prodRes.ok || !prodData.success) throw new Error(prodData.message || "Could not load your crafts.");
+            myProducts = prodData.products || [];
 
             // 2. Fetch Orders
             const orderRes = await fetch("/api/orders");
             const orderData = await orderRes.json();
-            if (orderData.success) {
-                const allOrders = orderData.orders || [];
-                const myProductIds = myProducts.map(p => String(p.product_id));
-                const myProductNames = myProducts.map(p => p.name.toLowerCase());
-
-                // Filter orders that contain this seller's products
-                myOrders = allOrders.filter(order => {
-                    if (!order.items) return false;
-                    return order.items.some(item => 
-                        myProductIds.includes(String(item.product_id)) ||
-                        myProductNames.includes((item.name || "").toLowerCase())
-                    );
-                });
-            }
+            if (!orderRes.ok || !orderData.success) throw new Error(orderData.message || "Could not load your sales.");
+            myOrders = orderData.orders || [];
 
             renderSellerView();
         } catch (e) {
             console.error(e);
-            showToast("Could not load seller data");
+            document.getElementById("sellerProductsTable").innerHTML = `<tr><td colspan="5" style="text-align:center; padding: 20px; color: #a33;">Could not load your crafts. Please refresh and try again.</td></tr>`;
+            document.getElementById("sellerOrdersTable").innerHTML = `<tr><td colspan="5" style="text-align:center; padding: 20px; color: #a33;">Could not load your sales. Please refresh and try again.</td></tr>`;
+            showToast(e.message || "Could not load seller data.");
         }
     }
 
@@ -264,11 +259,12 @@
         } else {
             prodTbody.innerHTML = myProducts.map(p => `
                 <tr>
-                    <td><img src="${p.image || 'images/vase.jpg'}" alt="${p.name}" style="width: 45px; height: 45px; object-fit: cover; border-radius: 6px;"></td>
-                    <td><strong>${p.name}</strong></td>
-                    <td>${p.category || 'Craft'}</td>
-                    <td>?${p.price}</td>
+                    <td><img src="${escapeHtml(p.image || 'images/vase.jpg')}" alt="${escapeHtml(p.name)}" style="width: 45px; height: 45px; object-fit: cover; border-radius: 6px;"></td>
+                    <td><strong>${escapeHtml(p.name)}</strong></td>
+                    <td>${escapeHtml(p.category || 'Craft')}</td>
+                    <td>₹${Number(p.price)}</td>
                     <td>
+                        <button type="button" onclick="editSellerProduct(${p.product_id})" style="background: none; border: none; cursor: pointer; color: var(--brown); font-size: 14px; font-weight: bold;">Edit</button>
                         <button type="button" onclick="deleteSellerProduct(${p.product_id})" style="background: none; border: none; cursor: pointer; color: #d33; font-size: 14px; font-weight: bold;">Remove</button>
                     </td>
                 </tr>
@@ -283,9 +279,9 @@
             orderTbody.innerHTML = myOrders.map(o => `
                 <tr>
                     <td><strong>#CV-${String(o.id || o.order_id).padStart(4, '0')}</strong></td>
-                    <td>${o.customer}</td>
-                    <td>${(o.items || []).map(i => `${i.name} (x${i.quantity || 1})`).join(", ")}</td>
-                    <td><span style="background: #e2f0d9; color: #274e13; padding: 3px 8px; border-radius: 8px; font-size: 12px; font-weight: bold;">${o.status}</span></td>
+                    <td>${escapeHtml(o.customer)}</td>
+                    <td>${(o.items || []).map(i => `${escapeHtml(i.name)} (x${Number(i.quantity || 1)})`).join(", ")}</td>
+                    <td><span style="background: #e2f0d9; color: #274e13; padding: 3px 8px; border-radius: 8px; font-size: 12px; font-weight: bold;">${escapeHtml(o.status)}</span></td>
                     <td>${o.orderDate ? new Date(o.orderDate).toLocaleDateString("en-GB") : 'Recently'}</td>
                 </tr>
             `).join("");
@@ -299,26 +295,39 @@
         const category = document.getElementById("sellerProdCategory").value;
         const price = Number(document.getElementById("sellerProdPrice").value);
         const image = document.getElementById("sellerProdImg").value.trim() || "images/vase.jpg";
-        const seller_id = currentUser.user_id || currentUser.id || null;
+        const editing = editingSellerProductId !== null;
 
         try {
-            const res = await fetch("/api/products", {
-                method: "POST",
+            const res = await fetch(editing ? `/api/products/${editingSellerProductId}` : "/api/products", {
+                method: editing ? "PUT" : "POST",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ name, description, category, price, image, seller_id })
+                body: JSON.stringify({ name, description, category, price, image })
             });
             const data = await res.json();
-            if (data.success) {
-                showToast("Craft listed successfully on CraftVerse!");
+            if (res.ok && data.success) {
+                showToast(editing ? "Craft updated successfully." : "Craft listed successfully on CraftVerse!");
                 closeAddModal();
                 document.getElementById("addSellerProdForm").reset();
                 loadSellerData();
             } else {
-                showToast(`? ${data.message}`);
+                showToast(data.message || "Could not save craft.");
             }
         } catch (e) {
             showToast("Error saving craft");
         }
+    }
+
+    function editSellerProduct(productId) {
+        const product = myProducts.find(item => Number(item.product_id) === Number(productId));
+        if (!product) return;
+        editingSellerProductId = product.product_id;
+        document.querySelector("#addSellerProductModal h3").textContent = "Edit Handmade Creation";
+        document.getElementById("sellerProdName").value = product.name || "";
+        document.getElementById("sellerProdDesc").value = product.description || "";
+        document.getElementById("sellerProdCategory").value = product.category || "Decor";
+        document.getElementById("sellerProdPrice").value = Number(product.price);
+        document.getElementById("sellerProdImg").value = product.image || "images/vase.jpg";
+        document.getElementById("addSellerProductModal").style.display = "flex";
     }
 
     async function deleteSellerProduct(prodId) {
@@ -326,27 +335,30 @@
         try {
             const res = await fetch(`/api/products/${prodId}`, { method: "DELETE" });
             const data = await res.json();
-            if (data.success) {
+            if (res.ok && data.success) {
                 showToast("Craft removed successfully!");
                 loadSellerData();
-            }
+            } else showToast(data.message || "Could not remove this craft.");
         } catch (e) {
             showToast("Error deleting craft");
         }
     }
 
     function openAddModal() {
+        editingSellerProductId = null;
+        document.querySelector("#addSellerProductModal h3").textContent = "List New Handmade Creation";
+        document.getElementById("addSellerProdForm").reset();
+        document.getElementById("sellerProdImg").value = "images/vase.jpg";
         document.getElementById("addSellerProductModal").style.display = "flex";
     }
 
     function closeAddModal() {
+        editingSellerProductId = null;
         document.getElementById("addSellerProductModal").style.display = "none";
     }
 
     document.addEventListener("DOMContentLoaded", () => {
-        if (checkSellerAuth()) {
-            loadSellerData();
-        }
+        checkSellerAuth().then(isAllowed => isAllowed && loadSellerData());
     });
 </script>
 </body>

@@ -79,12 +79,18 @@
                 const response = await fetch("/api/products");
                 const data = await response.json();
 
-                if (data.success && data.products && data.products.length > 0) {
-                    allProducts = data.products;
-                    renderProducts(allProducts);
-                } else {
-                    grid.innerHTML = `<p style="text-align: center; width: 100%; color: var(--muted);">No products found in the database.</p>`;
+                if (!response.ok || !data.success || !Array.isArray(data.products)) {
+                    grid.innerHTML = `<p style="text-align: center; width: 100%; color: #a33; padding: 30px;">Unable to load products because of a server or database error. Please try again later.</p>`;
+                    return;
                 }
+
+                allProducts = data.products;
+                if (allProducts.length === 0) {
+                    grid.innerHTML = `<p style="text-align: center; width: 100%; color: var(--muted);">No products found in the database.</p>`;
+                    return;
+                }
+
+                renderProducts(allProducts);
             } catch (error) {
                 console.error("Database fetch error:", error);
                 grid.innerHTML = `
@@ -104,27 +110,60 @@
                 return;
             }
 
-            grid.innerHTML = productsToDisplay.map(prod => `
-            <div class="product" data-name="${prod.name}" data-category="${prod.category}">
-                <a href="product-details.html?id=${prod.product_id}" style="text-decoration: none; color: inherit;">
-                    <img src="${prod.image || 'images/bracelet.jpg'}" class="product-img" alt="${prod.name}">
-                </a>
-                <div class="product-content">
-                    <a href="product-details.html?id=${prod.product_id}" style="text-decoration: none; color: inherit;">
-                        <h3>${prod.name}</h3>
-                    </a>
-                    <p class="product-description">
-                        ${prod.description || 'Authentic handmade artisanal craft.'}
-                    </p>
-                    <p class="product-price">
-                        <strong>₹${Number(prod.price)}</strong>
-                    </p>
-                    <button type="button" class="btn" onclick="addToCart({id: '${prod.product_id}', name: '${prod.name}', price: ${prod.price}, image: '${prod.image}'})">
-                        Add to Cart
-                    </button>
-                </div>
-            </div>
-        `).join("");
+            grid.replaceChildren();
+            productsToDisplay.forEach(prod => {
+                const productCard = document.createElement("div");
+                productCard.className = "product";
+                productCard.dataset.name = prod.name || "";
+                productCard.dataset.category = prod.category || "";
+
+                const productLink = document.createElement("a");
+                productLink.href = `product-details.html?id=${encodeURIComponent(prod.product_id)}`;
+                productLink.style.textDecoration = "none";
+                productLink.style.color = "inherit";
+
+                const image = document.createElement("img");
+                image.src = prod.image || "images/bracelet.jpg";
+                image.className = "product-img";
+                image.alt = prod.name || "Handmade product";
+                productLink.append(image);
+
+                const content = document.createElement("div");
+                content.className = "product-content";
+
+                const nameLink = document.createElement("a");
+                nameLink.href = productLink.href;
+                nameLink.style.textDecoration = "none";
+                nameLink.style.color = "inherit";
+                const name = document.createElement("h3");
+                name.textContent = prod.name || "Unnamed product";
+                nameLink.append(name);
+
+                const description = document.createElement("p");
+                description.className = "product-description";
+                description.textContent = prod.description || "Authentic handmade artisanal craft.";
+
+                const price = document.createElement("p");
+                price.className = "product-price";
+                const priceValue = document.createElement("strong");
+                priceValue.textContent = `₹${Number(prod.price)}`;
+                price.append(priceValue);
+
+                const addButton = document.createElement("button");
+                addButton.type = "button";
+                addButton.className = "btn";
+                addButton.textContent = "Add to Cart";
+                addButton.addEventListener("click", () => addToCart({
+                    id: String(prod.product_id),
+                    name: prod.name,
+                    price: Number(prod.price),
+                    image: prod.image || "images/bracelet.jpg"
+                }));
+
+                content.append(nameLink, description, price, addButton);
+                productCard.append(productLink, content);
+                grid.append(productCard);
+            });
         }
 
         // 3. Real-time Search Filter

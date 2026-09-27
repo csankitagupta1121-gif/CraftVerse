@@ -29,14 +29,6 @@
             Login to your CraftVerse account to track orders and shop handcrafted products.
         </p>
 
-        <!-- Quick Demo Credentials helper -->
-        <div style="background: #fff; border-left: 4px solid var(--terracotta); padding: 10px 14px; margin-bottom: 20px; border-radius: 6px; font-size: 13px;">
-            <p style="margin: 0; text-align: left;">
-                <strong>Demo Account:</strong> user@craftverse.com<br>
-                <strong>Password:</strong> user123
-            </p>
-        </div>
-
         <form class="login-form" id="loginForm" onsubmit="handleCustomerLogin(event)">
             <div class="form-group">
                 <label for="login-email">Email Address</label>
@@ -57,7 +49,7 @@
                     required>
             </div>
             <div class="forgot-password" style="text-align: right; margin-bottom: 15px;">
-                <a href="#" onclick="showToast('Password reset link sent to your email! 📧'); return false;">
+                <a href="#" onclick="handleForgotPassword(event)">
                     Forgot Password?
                 </a>
             </div>
@@ -86,6 +78,24 @@
 
 <script src="js/main.js"></script>
 <script>
+    async function handleForgotPassword(event) {
+        event.preventDefault();
+        const email = prompt("Enter the email address for your account:");
+        if (!email) return;
+        try {
+            const response = await fetch("/api/password-reset", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ email: email.trim().toLowerCase() })
+            });
+            const data = await response.json();
+            showToast(data.message || (response.ok ? "Check your email for next steps." : "Could not request a password reset."));
+        } catch (error) {
+            console.error("Password reset request failed:", error);
+            showToast("Unable to connect to the server. Please try again later.");
+        }
+    }
+
     async function handleCustomerLogin(e) {
     e.preventDefault();
 
@@ -103,12 +113,40 @@
 
         const data = await response.json();
 
-        if (data.success) {
+        if (response.status === 401) {
+            showToast("Invalid email or password. Please try again.");
+            return;
+        }
+
+        if (!response.ok || !data.success) {
+            const message = data.message || "Please try again later.";
+            showToast(response.status >= 500 ? `Server/database error: ${message}` : message);
+            return;
+        }
+
+        if (data.user) {
+            const role = String(data.user.role || "customer").trim().toLowerCase();
+            data.user.role = role;
             localStorage.setItem("craftverse_user", JSON.stringify(data.user));
+
+            if (role === "admin") {
+                localStorage.setItem("craftverse_admin_logged", "true");
+            } else {
+                localStorage.removeItem("craftverse_admin_logged");
+            }
 
             showToast(`Welcome back, ${data.user.name}! 🎉`);
 
             setTimeout(() => {
+                if (role === "admin") {
+                    window.location.href = "admin.html";
+                    return;
+                }
+                if (role === "seller") {
+                    window.location.href = "seller.html";
+                    return;
+                }
+
                 const cart = getCart();
 
                 if (cart.length > 0) {
@@ -118,7 +156,7 @@
                 }
             }, 1000);
         } else {
-            showToast("❌ Invalid Email or Password! Try again.");
+            showToast("Login failed: user information was not returned by the server.");
         }
 
     } catch (error) {

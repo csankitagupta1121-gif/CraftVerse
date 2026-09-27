@@ -211,6 +211,13 @@
                 <label>Image URL / Path</label>
                 <input type="text" id="newProdImg" placeholder="e.g. images/vase.jpg" value="images/vase.jpg" required style="width: 100%; padding: 8px; border-radius: 6px; border: 1px solid var(--border);">
             </div>
+            <div class="form-group" style="margin-bottom: 12px;">
+                <label for="newProdStock">Stock Status</label>
+                <select id="newProdStock" style="width: 100%; padding: 8px; border-radius: 6px; border: 1px solid var(--border);">
+                    <option value="1">In Stock</option>
+                    <option value="0">Out of Stock</option>
+                </select>
+            </div>
             <div style="display: flex; justify-content: flex-end; gap: 10px; margin-top: 20px;">
                 <button type="button" class="btn" style="background: #999;" onclick="closeAddProductModal()">Cancel</button>
                 <button type="submit" class="btn">Save to MySQL</button>
@@ -245,15 +252,22 @@
     let adminProducts = [];
     let adminOrders = [];
     let adminUsers = [];
+    let editingProductId = null;
 
     // Role Guard: Check if user is logged in as Admin
-    function checkAdminAuth() {
-        const user = JSON.parse(localStorage.getItem("craftverse_user"));
-        if (!user || user.role !== "admin") {
+    async function checkAdminAuth() {
+        let user;
+        try {
+            const response = await fetch("/api/session");
+            const data = await response.json();
+            if (!response.ok || !data.success || data.user.role !== "admin") throw new Error("Admin access required.");
+            user = data.user;
+        } catch (error) {
             alert("Access Denied: Admin access required. Please login with an admin account.");
             window.location.href = "admin-login.html";
             return false;
         }
+        localStorage.setItem("craftverse_user", JSON.stringify(user));
         document.getElementById("adminWelcomeMsg").textContent = `Welcome, ${user.name} (${user.email}) - CraftVerse Control Room`;
         return true;
     }
@@ -274,28 +288,32 @@
             // 1. Fetch Products
             const prodRes = await fetch("/api/products");
             const prodData = await prodRes.json();
-            if (prodData.success) {
-                adminProducts = prodData.products || [];
-            }
+            if (!prodRes.ok || !prodData.success) throw new Error(prodData.message || "Products could not be loaded.");
+            adminProducts = prodData.products || [];
 
             // 2. Fetch Orders
             const orderRes = await fetch("/api/orders");
             const orderData = await orderRes.json();
-            if (orderData.success) {
-                adminOrders = orderData.orders || [];
-            }
+            if (!orderRes.ok || !orderData.success) throw new Error(orderData.message || "Orders could not be loaded.");
+            adminOrders = orderData.orders || [];
 
             // 3. Fetch Users
             const userRes = await fetch("/api/users");
             const userData = await userRes.json();
-            if (userData.success) {
-                adminUsers = userData.users || [];
-            }
+            if (!userRes.ok || !userData.success) throw new Error(userData.message || "Users could not be loaded.");
+            adminUsers = userData.users || [];
 
             renderDashboard();
         } catch (error) {
             console.error("Admin Fetch Error:", error);
-            showToast("Error connecting to MySQL server!");
+            ["statTotalProducts", "statTotalOrders", "statTotalCustomers"].forEach(id => {
+                document.getElementById(id).textContent = "!";
+            });
+            ["adminProductsTable", "adminOrdersTable", "adminCustomersTable"].forEach(id => {
+                const table = document.getElementById(id);
+                table.innerHTML = `<tr><td colspan="7" style="text-align:center; padding: 20px; color: #a33;">Unable to load data. Please refresh and try again.</td></tr>`;
+            });
+            showToast(error.message || "Unable to load dashboard data.");
         }
     }
 
@@ -304,7 +322,7 @@
         // Render Stats Counts
         document.getElementById("statTotalProducts").textContent = adminProducts.length;
         document.getElementById("statTotalOrders").textContent = adminOrders.length;
-        document.getElementById("statTotalCustomers").textContent = adminUsers.length;
+        document.getElementById("statTotalCustomers").textContent = adminUsers.filter(user => user.role === "customer").length;
 
         // Render Orders Table
         const orderTable = document.getElementById("adminOrdersTable");
@@ -350,6 +368,7 @@
                     <td>₹${p.price}</td>
                     <td>${p.inStock ? 'Yes' : 'Out'}</td>
                     <td>
+                        <button type="button" onclick="editAdminProduct(${p.product_id})" style="background: none; border: none; cursor: pointer; color: var(--brown); font-size: 14px; font-weight: bold;">Edit</button>
                         <button type="button" onclick="deleteAdminProduct(${p.product_id})" style="background: none; border: none; cursor: pointer; color: #d33; font-size: 14px; font-weight: bold;">Delete</button>
                     </td>
                 </tr>
@@ -382,22 +401,24 @@
         const category = document.getElementById("newProdCategory").value;
         const price = Number(document.getElementById("newProdPrice").value);
         const image = document.getElementById("newProdImg").value.trim() || "images/vase.jpg";
+        const inStock = document.getElementById("newProdStock").value === "1";
 
         try {
-            const res = await fetch("/api/products", {
-                method: "POST",
+            const editing = editingProductId !== null;
+            const res = await fetch(editing ? `/api/products/${editingProductId}` : "/api/products", {
+                method: editing ? "PUT" : "POST",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ name, description, category, price, image })
+                body: JSON.stringify({ name, description, category, price, image, inStock })
             });
 
             const data = await res.json();
-            if (data.success) {
-                showToast("Product added successfully to MySQL!");
+            if (res.ok && data.success) {
+                showToast(editing ? "Product updated successfully." : "Product added successfully to MySQL!");
                 closeAddProductModal();
                 document.getElementById("addProductForm").reset();
                 fetchAdminData();
             } else {
-                showToast(data.message);
+                showToast(data.message || "Could not save product.");
             }
         } catch (error) {
             console.error("Save product error:", error);
@@ -422,6 +443,20 @@
             console.error("Delete error:", error);
             showToast("Error deleting product!");
         }
+    }
+
+    function editAdminProduct(productId) {
+        const product = adminProducts.find(item => Number(item.product_id) === Number(productId));
+        if (!product) return;
+        editingProductId = product.product_id;
+        document.querySelector("#addProductModal h3").textContent = "Edit Product";
+        document.getElementById("newProdName").value = product.name || "";
+        document.getElementById("newProdDesc").value = product.description || "";
+        document.getElementById("newProdCategory").value = product.category || "Decor";
+        document.getElementById("newProdPrice").value = Number(product.price);
+        document.getElementById("newProdImg").value = product.image || "images/vase.jpg";
+        document.getElementById("newProdStock").value = product.inStock ? "1" : "0";
+        document.getElementById("addProductModal").style.display = "flex";
     }
 
     // Update Order Status via API
@@ -457,22 +492,22 @@
             ? order.items.map(item => `
                 <div style="display: flex; justify-content: space-between; align-items: center; padding: 8px 0; border-bottom: 1px dashed #eee;">
                     <div>
-                        <strong>${item.name}</strong><br>
-                        <small style="color: var(--muted);">Qty: ${item.quantity || 1} x INR ${item.price}</small>
+                        <strong>${escapeHtml(item.name)}</strong><br>
+                        <small style="color: var(--muted);">Qty: ${Number(item.quantity || 1)} x INR ${Number(item.price)}</small>
                     </div>
-                    <strong>₹${(item.price * (item.quantity || 1))}</strong>
+                    <strong>₹${Number(item.price) * Number(item.quantity || 1)}</strong>
                 </div>
             `).join("")
             : `<p style="color: var(--muted); font-style: italic;">No individual item details available.</p>`;
 
         document.getElementById("modalOrderContent").innerHTML = `
             <div style="background: #fff; padding: 15px; border-radius: 8px; margin-bottom: 15px; border: 1px solid var(--border);">
-                <p><strong>Customer:</strong> ${order.customer}</p>
-                <p><strong>Email:</strong> ${order.email || 'N/A'}</p>
-                <p><strong>Phone:</strong> ${order.phone}</p>
-                <p><strong>Delivery Address:</strong><br>${order.address}</p>
-                <p><strong>Payment Method:</strong> ${order.paymentMethod || 'Cash on Delivery'}</p>
-                <p><strong>Status:</strong> <span style="font-weight: bold; color: var(--terracotta);">${order.status}</span></p>
+                <p><strong>Customer:</strong> ${escapeHtml(order.customer)}</p>
+                <p><strong>Email:</strong> ${escapeHtml(order.email || 'N/A')}</p>
+                <p><strong>Phone:</strong> ${escapeHtml(order.phone)}</p>
+                <p><strong>Delivery Address:</strong><br>${escapeHtml(order.address)}</p>
+                <p><strong>Payment Method:</strong> ${escapeHtml(order.paymentMethod || 'Cash on Delivery')}</p>
+                <p><strong>Status:</strong> <span style="font-weight: bold; color: var(--terracotta);">${escapeHtml(order.status)}</span></p>
                 <p><strong>Order Placed Date:</strong> ${order.orderDate ? new Date(order.orderDate).toLocaleString("en-GB") : 'Recently'}</p>
             </div>
 
@@ -482,7 +517,7 @@
             </div>
 
             <div style="text-align: right; font-size: 16px;">
-                <strong>Grand Total: <span style="color: var(--dark-brown); font-size: 20px;">₹${order.total || order.totalAmount}</span></strong>
+                <strong>Grand Total: <span style="color: var(--dark-brown); font-size: 20px;">₹${Number(order.total || order.totalAmount)}</span></strong>
             </div>
         `;
 
@@ -494,17 +529,21 @@
     }
 
     function openAddProductModal() {
+        editingProductId = null;
+        document.querySelector("#addProductModal h3").textContent = "Add New Handmade Craft";
+        document.getElementById("addProductForm").reset();
+        document.getElementById("newProdImg").value = "images/vase.jpg";
+        document.getElementById("newProdStock").value = "1";
         document.getElementById("addProductModal").style.display = "flex";
     }
 
     function closeAddProductModal() {
+        editingProductId = null;
         document.getElementById("addProductModal").style.display = "none";
     }
 
     document.addEventListener("DOMContentLoaded", () => {
-        if (checkAdminAuth()) {
-            fetchAdminData();
-        }
+        checkAdminAuth().then(isAdmin => isAdmin && fetchAdminData());
     });
 </script>
 </body>

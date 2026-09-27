@@ -43,8 +43,8 @@
                 </p>
                 
                 <div class="product-info" style="margin-bottom: 20px; background: #fff; padding: 15px; border-radius: 8px; border: 1px solid var(--border);">
-                    <p style="margin-bottom: 6px;"><strong>Category:</strong> <span id="detailCategory">Accessories</span></p>
-                    <p style="margin: 0;"><strong>Availability:</strong> <span style="color: green; font-weight: bold;">In Stock (Artisan Made)</span></p>
+                    <p style="margin-bottom: 6px;"><strong>Category:</strong> <span id="detailCategory">Loading...</span></p>
+                    <p style="margin: 0;"><strong>Availability:</strong> <span id="detailAvailability" style="font-weight: bold;">Loading...</span></p>
                 </div>
 
                 <div class="quantity-section" style="margin-bottom: 25px; display: flex; align-items: center; gap: 12px;">
@@ -80,45 +80,78 @@
 
 <script src="js/main.js"></script>
 <script>
-    // Handmade Product Catalog
-    const catalog = {
-        "1": { name: "Handmade Bracelet", price: 250, image: "images/bracelet.jpg", category: "Accessories", desc: "Beautiful handcrafted bracelet crafted with natural beads and eco-friendly thread, perfect for daily wear and gifting." },
-        "2": { name: "Clay Pot", price: 400, image: "images/claypot.jpg", category: "Home Decor", desc: "Classic handmade terracotta clay pot ideal for indoor plants, table decoration, and organic home aesthetic." },
-        "3": { name: "Wooden Photo Frame", price: 550, image: "images/frame.jpg", category: "Home Decor", desc: "Premium wooden frame intricately hand-carved by seasoned artisans to preserve your cherished memories forever." },
-        "4": { name: "Decorative Flower Vase", price: 350, image: "images/vase.jpg", category: "Home Decor", desc: "Elegant handmade ceramic vase that adds a serene aesthetic and artistic touch to any corner of your room." },
-        "5": { name: "Macrame Wall Hanging", price: 650, image: "images/macrame.jpg", category: "Home Decor", desc: "100% Cotton handmade macrame wall hanging crafted with intricate bohemian knot patterns." },
-        "6": { name: "Handmade Bag", price: 750, image: "images/bag.jpg", category: "Accessories", desc: "Eco-friendly, highly durable jute & cotton tote bag designed for sustainable and stylish everyday shopping." },
-        "7": { name: "Scented Candle", price: 450, image: "images/candle.jpg", category: "Living & Dining", desc: "Organic soy wax scented candle with soothing aromatic essential oils for aromatherapy and cozy evenings." },
-        "8": { name: "Wooden Bowl", price: 300, image: "images/bowl.jpg", category: "Living & Dining", desc: "Hand-carved solid Sheesham wood bowl finished with food-safe natural polish for fruits and snacks." }
-    };
+    let currentProduct = null;
+    let currentProductId = null;
+    let currentProductInStock = false;
 
-    // Parse URL parameter
-    const urlParams = new URLSearchParams(window.location.search);
-    const productId = urlParams.get("id") || "1";
-    const currentProduct = catalog[productId] || catalog["1"];
+    function showProductMessage(message) {
+        const detailsBox = document.getElementById("productDetailsBox");
+        const messageElement = document.createElement("p");
+        messageElement.textContent = message;
+        messageElement.style.cssText = "grid-column: 1 / -1; text-align: center; padding: 40px; color: var(--muted);";
+        detailsBox.replaceChildren(messageElement);
+    }
 
-    // Render Data into DOM
-    document.getElementById("detailImg").src = currentProduct.image;
-    document.getElementById("detailImg").alt = currentProduct.name;
-    document.getElementById("detailTitle").textContent = currentProduct.name;
-    document.getElementById("detailPrice").textContent = `₹${currentProduct.price}`;
-    document.getElementById("detailDesc").textContent = currentProduct.desc;
-    document.getElementById("detailCategory").textContent = currentProduct.category;
+    async function loadProductDetails() {
+        const productId = new URLSearchParams(window.location.search).get("id");
+        if (!productId || !productId.trim()) {
+            showProductMessage("Product not found.");
+            return;
+        }
 
-    // Add to Cart handler
+        currentProductId = productId;
+        try {
+            const response = await fetch(`/api/products/${encodeURIComponent(productId)}`);
+            const data = await response.json();
+
+            if (response.status === 404 || (!data.success && response.ok)) {
+                showProductMessage("Product not found.");
+                return;
+            }
+            if (!response.ok || !data.success || !data.product) {
+                showProductMessage("Unable to load this product because of a server or database error.");
+                return;
+            }
+
+            currentProduct = data.product;
+            currentProductInStock = currentProduct.inStock === true || currentProduct.inStock === 1 || currentProduct.inStock === "1";
+
+            const image = document.getElementById("detailImg");
+            image.src = currentProduct.image || "images/bracelet.jpg";
+            image.alt = currentProduct.name || "Handmade product";
+            document.getElementById("detailTitle").textContent = currentProduct.name || "Unnamed product";
+            document.getElementById("detailPrice").textContent = `₹${Number(currentProduct.price)}`;
+            document.getElementById("detailDesc").textContent = currentProduct.description || "Authentic handmade artisanal craft.";
+            document.getElementById("detailCategory").textContent = currentProduct.category || "Craft";
+
+            const availability = document.getElementById("detailAvailability");
+            availability.textContent = currentProductInStock ? "In Stock" : "Out of Stock";
+            availability.style.color = currentProductInStock ? "green" : "#a33";
+
+            document.querySelectorAll(".product-actions button").forEach(button => {
+                button.disabled = !currentProductInStock;
+            });
+        } catch (error) {
+            console.error("Product detail fetch error:", error);
+            showProductMessage("Unable to connect to the server. Please try again later.");
+        }
+    }
+
     function addCurrentProductToCart(isBuyNow) {
+        if (!currentProduct || !currentProductInStock) return;
+
         const qty = parseInt(document.getElementById("detailQuantity").value) || 1;
         let cart = getCart();
-        const existingIndex = cart.findIndex(item => item.id === productId);
+        const existingIndex = cart.findIndex(item => item.id === String(currentProductId));
 
         if (existingIndex > -1) {
             cart[existingIndex].quantity = (cart[existingIndex].quantity || 1) + qty;
         } else {
             cart.push({
-                id: productId,
+                id: String(currentProductId),
                 name: currentProduct.name,
-                price: currentProduct.price,
-                image: currentProduct.image,
+                price: Number(currentProduct.price),
+                image: currentProduct.image || "images/bracelet.jpg",
                 quantity: qty
             });
         }
@@ -131,6 +164,8 @@
             showToast(`Added ${qty} × "${currentProduct.name}" to cart! 🛒`);
         }
     }
+
+    loadProductDetails();
 </script>
 </body>
 </html>

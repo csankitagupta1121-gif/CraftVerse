@@ -116,7 +116,7 @@
     });
 
     // Handle Contact Form Submission
-    function handleContactSubmit(e) {
+    async function handleContactSubmit(e) {
         e.preventDefault();
 
         const name = document.getElementById("contact-name").value.trim();
@@ -124,21 +124,23 @@
         const subject = document.getElementById("contact-subject").value.trim();
         const message = document.getElementById("contact-message").value.trim();
 
-        const newMessage = {
-            id: Date.now().toString(),
-            name,
-            email,
-            subject,
-            message,
-            date: new Date().toLocaleDateString()
-        };
-
-        let messages = JSON.parse(localStorage.getItem("craftverse_contact_messages")) || [];
-        messages.push(newMessage);
-        localStorage.setItem("craftverse_contact_messages", JSON.stringify(messages));
-
-        showToast("✨ Thank you! Your message has been sent successfully.");
-        document.getElementById("contactForm").reset();
+        try {
+            const response = await fetch("/api/contact", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ name, email, subject, message })
+            });
+            const data = await response.json();
+            if (!response.ok || !data.success) {
+                showToast(data.message || "Your message could not be sent.");
+                return;
+            }
+            showToast(data.message);
+            document.getElementById("contactForm").reset();
+        } catch (error) {
+            console.error("Contact form error:", error);
+            showToast("Unable to connect to the server. Your message was not sent.");
+        }
     }
 </script>
 </body>

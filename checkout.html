@@ -143,8 +143,8 @@
 
                 return `
                 <div class="summary-row" style="margin-bottom: 8px;">
-                    <span>${item.name} (×${itemQty})</span>
-                    <span>₹${itemTotal}</span>
+                    <span>${escapeHtml(item.name)} (×${itemQty})</span>
+                    <span>₹${Number(itemTotal)}</span>
                 </div>
             `;
             }).join("");
@@ -161,7 +161,7 @@
         }
 
         // Handle Order Submission
-        function handlePlaceOrder(e) {
+        async function handlePlaceOrder(e) {
             e.preventDefault();
             const cart = getCart();
 
@@ -190,83 +190,39 @@
                 showToast("✅ Online Payment Successful!");
             }
 
-            let totalAmount = cart.reduce((sum, item) => sum + (item.price * (item.quantity || 1)), 0);
-            const orderId = `CV-${Math.floor(1000 + Math.random() * 9000)}`;
-            const orderDate = new Date().toLocaleDateString("en-GB", { day: '2-digit', month: 'long', year: 'numeric' });
-
-            const newOrder = {
-                id: orderId,
-                customer: name,
-                phone: phone,
-                address: `${address}, ${city}, ${state} - ${pincode}`,
-                items: cart,
-                total: totalAmount,
-                paymentMethod: paymentMethod,
-                orderDate: orderDate,
-                status: "Placed"
-            };
-
-            // Save order in MySQL database
-            const user = JSON.parse(localStorage.getItem("craftverse_user"));
-
-            fetch("/api/orders", {
+            const submitButton = document.getElementById("placeOrderSubmitBtn");
+            submitButton.disabled = true;
+            try {
+                const response = await fetch("/api/orders", {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json"
                 },
                 body: JSON.stringify({
                     customer: name,
-                    email: user ? user.email : "",
                     phone: phone,
                     address: `${address}, ${city}, ${state} - ${pincode}`,
-                    totalAmount: totalAmount,
                     paymentMethod: paymentMethod,
-                    status: "Placed",
-                    orderDate: new Date().toISOString()
+                    items: cart
                 })
-            })
-                .then(response => response.json())
-                .then(data => {
-                    if (!data.success) {
-                        showToast("❌ Order could not be saved!");
-                        return;
-                    }
-
-                    // Save order items in MySQL
-                    fetch("/api/order-items", {
-                        method: "POST",
-                        headers: {
-                            "Content-Type": "application/json"
-                        },
-                        body: JSON.stringify({
-                            order_id: data.orderId,
-                            items: cart
-                        })
-                    })
-                        .then(itemResponse => itemResponse.json())
-                        .then(itemData => {
-                            if (!itemData.success) {
-                                showToast("❌ Order saved, but items could not be saved!");
-                                return;
-                            }
-
-                            saveCart([]);
-
-                            showToast(`🎉 Order #${orderId} Placed Successfully!`);
-
-                            setTimeout(() => {
-                                window.location.href = "orders.html";
-                            }, 1200);
-                        })
-                        .catch(error => {
-                            console.error("Order Items Error:", error);
-                            showToast("❌ Order items could not be saved!");
-                        });
-                })
-                .catch(error => {
-                    console.error("Order Error:", error);
-                    showToast("❌ Unable to connect to server!");
                 });
+                const data = await response.json();
+                if (!response.ok || !data.success) {
+                    showToast(data.message || "Order could not be saved.");
+                    return;
+                }
+
+                saveCart([]);
+                showToast(`🎉 Order #${data.formattedOrderId} placed successfully!`);
+                setTimeout(() => {
+                    window.location.href = "orders.html";
+                }, 1200);
+            } catch (error) {
+                console.error("Order Error:", error);
+                showToast("Unable to connect to the server. Your cart has been kept.");
+            } finally {
+                submitButton.disabled = getCart().length === 0;
+            }
         }
 
         document.addEventListener("DOMContentLoaded", () => {

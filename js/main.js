@@ -1,5 +1,15 @@
 // CraftVerse - Global Shared JavaScript (Cart & Auth Helper)
 
+function escapeHtml(value) {
+    return String(value ?? "").replace(/[&<>"']/g, character => ({
+        "&": "&amp;",
+        "<": "&lt;",
+        ">": "&gt;",
+        '"': "&quot;",
+        "'": "&#39;"
+    })[character]);
+}
+
 // Get Cart from LocalStorage
 function getCart() {
     return JSON.parse(localStorage.getItem("craftverse_cart")) || [];
@@ -82,14 +92,18 @@ function updateNavbarAuth() {
 }
 
 // Logout User
-function logoutUser(e) {
+async function logoutUser(e) {
     if (e) e.preventDefault();
-    localStorage.removeItem("craftverse_user");
-    localStorage.removeItem("craftverse_token");
-    showToast("Logged out successfully! 👋");
-    setTimeout(() => {
-        window.location.href = "index.html";
-    }, 800);
+    try {
+        await fetch("/api/logout", { method: "POST" });
+    } catch (error) {
+        console.error("Logout request failed:", error);
+    } finally {
+        localStorage.removeItem("craftverse_user");
+        localStorage.removeItem("craftverse_token");
+        localStorage.removeItem("craftverse_admin_logged");
+        window.location.href = "login.html";
+    }
 }
 
 // Initialize on page load

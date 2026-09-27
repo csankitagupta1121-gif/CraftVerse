@@ -122,28 +122,34 @@
 
 <script src="js/main.js"></script>
 <script>
-    function loadUserProfile() {
-        const user = JSON.parse(localStorage.getItem("craftverse_user")) || {
-            name: "Priya Sharma",
-            email: "priya@craftverse.com",
-            phone: "+91 9876543210",
-            address: "Flat 402, Green Valley Apartments, Mumbai, Maharashtra"
-        };
+    function renderUserProfile(user) {
+        localStorage.setItem("craftverse_user", JSON.stringify(user));
 
-        document.getElementById("profileNameDisplay").textContent = user.name;
-        document.getElementById("profileEmailDisplay").textContent = user.email;
-        document.getElementById("infoFullName").textContent = user.name;
+        document.getElementById("profileNameDisplay").textContent = user.name || "";
+        document.getElementById("profileEmailDisplay").textContent = user.email || "";
+        document.getElementById("infoFullName").textContent = user.name || "";
         document.getElementById("infoEmail").textContent = user.email;
         document.getElementById("infoPhone").textContent = user.phone || "Not set";
         document.getElementById("infoAddress").textContent = user.address || "Not set";
 
-        // Initial avatar initial
         if (user.name) {
             document.getElementById("profileAvatar").textContent = user.name.charAt(0).toUpperCase();
         }
     }
 
-    function openEditProfile() {
+    async function loadUserProfile() {
+        try {
+            const response = await fetch("/api/profile");
+            const data = await response.json();
+            if (!response.ok || !data.success) throw new Error(data.message || "Could not load your profile.");
+            renderUserProfile(data.user);
+        } catch (error) {
+            showToast(error.message || "Could not load your profile.");
+            if (error.message.includes("log in")) setTimeout(() => window.location.href = "login.html", 800);
+        }
+    }
+
+    async function openEditProfile() {
         const user = JSON.parse(localStorage.getItem("craftverse_user")) || {};
         const newName = prompt("Enter your Full Name:", user.name || "");
         if (newName === null) return;
@@ -154,14 +160,24 @@
         const newAddress = prompt("Enter your Default Delivery Address:", user.address || "");
         if (newAddress === null) return;
 
-        user.name = newName.trim() || user.name;
-        user.phone = newPhone.trim() || user.phone;
-        user.address = newAddress.trim() || user.address;
-
-        localStorage.setItem("craftverse_user", JSON.stringify(user));
-        loadUserProfile();
-        updateNavbarAuth();
-        showToast("Profile updated successfully! ✨");
+        try {
+            const response = await fetch("/api/profile", {
+                method: "PUT",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ name: newName.trim(), phone: newPhone.trim(), address: newAddress.trim() })
+            });
+            const data = await response.json();
+            if (!response.ok || !data.success) {
+                showToast(data.message || "Could not save profile changes.");
+                return;
+            }
+            renderUserProfile(data.user);
+            updateNavbarAuth();
+            showToast("Profile updated successfully! ✨");
+        } catch (error) {
+            console.error("Profile update error:", error);
+            showToast("Unable to connect to the server. Profile was not changed.");
+        }
     }
 
     document.addEventListener("DOMContentLoaded", () => {
