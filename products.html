@@ -152,7 +152,9 @@
                 const addButton = document.createElement("button");
                 addButton.type = "button";
                 addButton.className = "btn";
-                addButton.textContent = "Add to Cart";
+                const inStock = prod.inStock === true || prod.inStock === 1 || prod.inStock === "1";
+                addButton.textContent = inStock ? "Add to Cart" : "Out of Stock";
+                addButton.disabled = !inStock;
                 addButton.addEventListener("click", () => addToCart({
                     id: String(prod.product_id),
                     name: prod.name,

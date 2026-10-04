@@ -80,6 +80,15 @@
 
             if (data.success) {
                 if (data.user.role !== "admin") {
+                    try {
+                        await fetch("/api/logout", { method: "POST" });
+                    } catch (logoutError) {
+                        console.error("Rejected admin login session cleanup failed:", logoutError);
+                    } finally {
+                        localStorage.removeItem("craftverse_user");
+                        localStorage.removeItem("craftverse_token");
+                        localStorage.removeItem("craftverse_admin_logged");
+                    }
                     showToast("❌ Access Denied: This account is not an Admin!");
                     return;
                 }

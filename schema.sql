@@ -3,9 +3,6 @@
 -- Database Name: craftverse
 -- ===================================================
 
-CREATE DATABASE IF NOT EXISTS craftverse;
-USE craftverse;
-
 -- ---------------------------------------------------
 -- 1. Table: users
 -- ---------------------------------------------------

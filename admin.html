@@ -333,10 +333,10 @@
                 <tr>
                     <td><strong>#CV-${String(o.id || o.order_id).padStart(4, '0')}</strong></td>
                     <td>
-                        <strong>${o.customer}</strong><br>
-                        <small style="color: var(--muted);">${o.email || ''}</small>
+                        <strong>${escapeHtml(o.customer)}</strong><br>
+                        <small style="color: var(--muted);">${escapeHtml(o.email || '')}</small>
                     </td>
-                    <td>${o.phone}</td>
+                    <td>${escapeHtml(o.phone)}</td>
                     <td><strong>₹${o.total || o.totalAmount}</strong></td>
                     <td><small>${o.paymentMethod || 'COD'}</small></td>
                     <td>
@@ -362,9 +362,9 @@
             prodTable.innerHTML = adminProducts.map((p) => `
                 <tr>
                     <td>#${p.product_id}</td>
-                    <td><img src="${p.image || 'images/vase.jpg'}" alt="${p.name}" style="width: 45px; height: 45px; object-fit: cover; border-radius: 6px;"></td>
-                    <td><strong>${p.name}</strong></td>
-                    <td>${p.category || 'Craft'}</td>
+                    <td><img src="${escapeHtml(p.image || 'images/vase.jpg')}" alt="${escapeHtml(p.name)}" style="width: 45px; height: 45px; object-fit: cover; border-radius: 6px;"></td>
+                    <td><strong>${escapeHtml(p.name)}</strong></td>
+                    <td>${escapeHtml(p.category || 'Craft')}</td>
                     <td>₹${p.price}</td>
                     <td>${p.inStock ? 'Yes' : 'Out'}</td>
                     <td>
@@ -383,9 +383,9 @@
             custTable.innerHTML = adminUsers.map((u) => `
                 <tr>
                     <td>#${u.user_id}</td>
-                    <td><strong>${u.name}</strong></td>
-                    <td>${u.email}</td>
-                    <td>${u.phone || 'N/A'}</td>
+                    <td><strong>${escapeHtml(u.name)}</strong></td>
+                    <td>${escapeHtml(u.email)}</td>
+                    <td>${escapeHtml(u.phone || 'N/A')}</td>
                     <td><span style="background: ${u.role === 'admin' ? '#ffe0b2' : (u.role === 'seller' ? '#e1bee7' : '#c8e6c9')}; padding: 3px 8px; border-radius: 10px; font-size: 12px; font-weight: bold;">${u.role.toUpperCase()}</span></td>
                     <td>${u.created_at ? new Date(u.created_at).toLocaleDateString("en-GB") : 'Recently'}</td>
                 </tr>

@@ -80,7 +80,7 @@ function updateNavbarAuth() {
 
     if (user && user.name) {
         navAuthContainer.innerHTML = `
-            <a href="profile.html" class="nav-user">👤 ${user.name.split(" ")[0]}</a>
+            <a href="profile.html" class="nav-user">👤 ${escapeHtml(user.name.split(" ")[0])}</a>
             <a href="orders.html">Orders</a>
             <a href="#" onclick="logoutUser(event)" class="nav-logout">Logout</a>
         `;

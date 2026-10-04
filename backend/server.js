@@ -29,6 +29,12 @@ const transporter = nodemailer.createTransport({
 });
 
 app.use(express.json());
+app.use((req, res, next) => {
+    if (!req.body || typeof req.body !== "object" || Array.isArray(req.body)) {
+        req.body = {};
+    }
+    next();
+});
 
 function query(sql, params = [], connection = db) {
     return new Promise((resolve, reject) => {
@@ -81,10 +87,15 @@ function clearSessionCookie(res) {
 }
 
 function requireAuth(req, res, next) {
-    const cookies = Object.fromEntries((req.headers.cookie || "").split(";").filter(Boolean).map(cookie => {
-        const separator = cookie.indexOf("=");
-        return [cookie.slice(0, separator).trim(), decodeURIComponent(cookie.slice(separator + 1).trim())];
-    }));
+    let cookies;
+    try {
+        cookies = Object.fromEntries((req.headers.cookie || "").split(";").filter(Boolean).map(cookie => {
+            const separator = cookie.indexOf("=");
+            return [cookie.slice(0, separator).trim(), decodeURIComponent(cookie.slice(separator + 1).trim())];
+        }));
+    } catch {
+        return res.status(401).json({ success: false, message: "Please log in to continue." });
+    }
     const session = verifySession(cookies[sessionCookieName]);
     if (!session) return res.status(401).json({ success: false, message: "Please log in to continue." });
 
@@ -141,8 +152,30 @@ app.get("/", (req, res) => {
     res.sendFile(path.join(__dirname, "../login.html"));
 });
 
-// Frontend static folder access
-app.use(express.static(path.join(__dirname, "../")));
+const frontendRoot = path.join(__dirname, "..");
+const allowedPages = new Set([
+    "index.html",
+    "products.html",
+    "product-details.html",
+    "cart.html",
+    "checkout.html",
+    "orders.html",
+    "profile.html",
+    "contact.html",
+    "login.html",
+    "register.html",
+    "admin.html",
+    "admin-login.html",
+    "seller.html"
+]);
+
+app.use("/css", express.static(path.join(frontendRoot, "css"), { index: false }));
+app.use("/js", express.static(path.join(frontendRoot, "js"), { index: false }));
+app.use("/images", express.static(path.join(frontendRoot, "images"), { index: false }));
+app.get("/:page", (req, res, next) => {
+    if (!allowedPages.has(req.params.page)) return next();
+    res.sendFile(path.join(frontendRoot, req.params.page));
+});
 
 // ==========================================
 // AUTHENTICATION APIs
@@ -261,6 +294,12 @@ app.post("/api/register", (req, res) => {
                 [name, email, hashedPassword, phone || "", address || "", userRole],
                 (err, result) => {
                 if (err) {
+                    if (err.code === "ER_DUP_ENTRY" || err.errno === 1062) {
+                        return res.status(409).json({
+                            success: false,
+                            message: "Email already registered"
+                        });
+                    }
                     console.error("Registration database error:", err.message);
                     return res.status(500).json({
                         success: false,
@@ -792,6 +831,18 @@ app.post("/api/password-reset/confirm", async (req, res) => {
         console.error("Password reset update failed:", error.message);
         res.status(500).json({ success: false, message: "Unable to reset the password right now." });
     }
+});
+
+app.use((error, req, res, next) => {
+    console.error("Unhandled application error:", error);
+    if (res.headersSent) return next(error);
+
+    const status = Number.isInteger(error.status) && error.status >= 400 && error.status < 500 ? error.status : 500;
+    const message = status < 500 ? "Invalid request." : "An unexpected server error occurred.";
+    if (req.originalUrl.startsWith("/api/")) {
+        return res.status(status).json({ success: false, message });
+    }
+    res.status(status).send(message);
 });
 
 // Start server

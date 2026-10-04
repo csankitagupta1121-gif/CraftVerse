@@ -49,6 +49,11 @@
             color: #274e13;
         }
 
+        .status-Cancelled {
+            background: #f4cccc;
+            color: #990000;
+        }
+
         .order-item-row {
             display: flex;
             align-items: center;
@@ -116,6 +121,10 @@
                 const orderResponse = await fetch("/api/orders");
                 const orderData = await orderResponse.json();
 
+                if (orderResponse.status === 401) {
+                    await logoutUser();
+                    return;
+                }
                 if (!orderResponse.ok || !orderData.success) {
                     throw new Error(orderData.message || "Unable to load orders.");
                 }
@@ -136,6 +145,7 @@
                 container.innerHTML = orders.map(order => {
                     // Bug fix: backend se 'id' aata hai
                     const orderIdNumber = order.id || order.order_id || "1001";
+                    const formattedOrderId = String(orderIdNumber).padStart(4, "0");
                     const status = order.status || "Placed";
                     const statusClass = `status-${status}`;
                     const orderItems = order.items || [];
@@ -172,7 +182,7 @@
                         <div class="order-header">
                             <div>
                                 <h3 style="margin: 0; color: var(--dark-brown); font-size: 18px;">
-                                    Order #CV-${orderIdNumber}
+                                    Order #CV-${formattedOrderId}
                                 </h3>
 
                                 <span style="font-size: 13px; color: var(--muted);">

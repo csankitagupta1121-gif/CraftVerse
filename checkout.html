@@ -207,6 +207,10 @@
                 })
                 });
                 const data = await response.json();
+                if (response.status === 401) {
+                    await logoutUser();
+                    return;
+                }
                 if (!response.ok || !data.success) {
                     showToast(data.message || "Order could not be saved.");
                     return;
